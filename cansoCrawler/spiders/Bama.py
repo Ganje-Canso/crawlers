@@ -6,23 +6,33 @@ class BamaSpider(scrapy.Spider):
     name = 'bama'
     allowed_domains = ['bama.ir']
     base_url = ""
+    category = ""
 
     def start_requests(self):
         url = "https://bama.ir/"
-        category = getattr(self, "category", "car")
-        url = url + category + "/"
-        self.base_url = url + "all-brands/all-models/all-trims?page="
+        self.category = getattr(self, "category", "car")
+        if self.category == "motorcycle":
+            self.base_url = url + "motorcycle?page="
+        else:
+            self.base_url = url + "car/all-brands/all-models/all-trims?page="
         yield scrapy.Request(self.base_url + "{}".format(1), callback=self.parse)
 
     def parse(self, response, page=2):
         self.logger.info("get ads from page: %s", page - 1)
-        ad_links = response.css('div#adlist li').xpath('./a/@href').getall()
-        yield from response.follow_all(ad_links, callback=self.parse_ad, cb_kwargs={"page": page - 1})
+        yield from response.follow_all(self.get_ad_links(response), callback=self.parse_ad,
+                                       cb_kwargs={"page": page - 1})
 
         # get next page
         if page <= 5:
             yield response.follow(self.base_url + "{}".format(page), callback=self.parse,
                                   cb_kwargs={"page": page + 1})
+
+    def get_ad_links(self, response):
+        if self.category == "motorcycle":
+            _links = response.css('div.eventlist li::attr(onclick)').getall()
+            return [link[link.find('http'):len(link) - 1] for link in _links]
+        else:
+            return response.css('div#adlist li').xpath('./a/@href').getall()
 
     def parse_ad(self, response, page):
         if "news" in response.request.url:
@@ -37,6 +47,7 @@ class BamaSpider(scrapy.Spider):
             "brand": response.css('div.breadcrumb-div-section ol').xpath('./li[3]/a/span/text()').get().strip(),
             "model": response.css('div.breadcrumb-div-section ol').xpath('./li[4]/a/span/text()').get().strip(),
             "page": page,
+            "category": self.category,
             "description": description,
             "details": self.create_details(info_right.xpath('./p'))
         }
@@ -50,7 +61,8 @@ class BamaSpider(scrapy.Spider):
             key = detail.xpath('./span[1]/text()').get().strip()
             if key == "رنگ":
                 value = detail.xpath('./span[2]/f[1]/text()').get().strip()
-                details["رنگ داخل"] = detail.xpath('./span[2]/f[4]/text()').get().strip()
+                if self.category == "car":
+                    details["رنگ داخل"] = detail.xpath('./span[2]/f[4]/text()').get().strip()
             else:
                 value = detail.xpath('./span[2]/text()').get().strip()
             details[key] = value
