@@ -26,13 +26,13 @@ class IhomeSpider(scrapy.Spider):
         neigh_list = json_response["data"]
         for neigh in neigh_list:
             for category in self.home_type_dict["data"].values():
-                for child in category["children"]:
+                for sub_category in category["children"]:
                     yield response.follow(
-                        "https://ihome.ir/{}-{}/{}/{}".format(self.transaction_type, child["slug"], url_part2,
+                        "https://ihome.ir/{}-{}/{}/{}".format(self.transaction_type, sub_category["slug"], url_part2,
                                                               neigh["location_slug"]),
                         callback=self.parse_ads, cb_kwargs={"city": city, "neigh": neigh["title"],
                                                             "category": category["label"],
-                                                            "sub_category": child[
+                                                            "sub_category": sub_category[
                                                                 "label"]})
 
     def parse_ads(self, response, city, neigh, category, sub_category):
@@ -42,18 +42,24 @@ class IhomeSpider(scrapy.Spider):
                                                                                  "sub_category": sub_category})
 
     def parse_ad(self, response, city, neigh, category, sub_category):
-        _price = response.css('div.property-detail_price-box').xpath('./div[2]')
+        details = {"empty": False}
+        self.set_first_details(response, details)
+        self.set_primary_details(response, details)
+        self.set_extend_details(response, details)
         yield {
             "subject": response.css('h1.property-detail_title::text').get('not-defined').strip(),
-            "price": self.createPrice(response),
+            "price": self.get_price(response),
             "city": city,
             "neigh": neigh,
             "category": category,
             "sub_category": sub_category,
-            "url": response.request.url
+            "url": response.request.url,
+            "description": response.css('div.property-detail_agency-box_description p::text').get(
+                'not-defined').strip(),
+            "details": details
         }
 
-    def createPrice(self, response):
+    def get_price(self, response):
         price = ""
         _price = response.css('div.property-detail_price-box').xpath('./div[2]')
         price += _price.xpath('./strong[1]/text()').get().strip()
@@ -62,6 +68,29 @@ class IhomeSpider(scrapy.Spider):
         price += _price.xpath('./text()')[1].get().strip()
 
         return price
+
+    def set_first_details(self, response, details):
+        first_details = response.css('div.property-detail__icons')[0]
+        first_details_values = first_details.css('span.property-detail__icons-item__value span::text').getall()
+        first_details_keys = first_details.css('span.property-detail__icons-item__unit::text').getall()
+        for key, value in dict(zip(first_details_keys, first_details_values)):
+            if len(key.strip()) != 0 and len(value.strip()) != 0:
+                details[key] = value
+
+    def set_primary_details(self, response, details):
+        primary_details = response.css('div.properties__list')
+        for primary_detail in primary_details:
+            key = primary_detail.xpath('./small/text()').get().strip()
+            value = primary_detail.xpath('./span/text()').get().strip()
+            details[key] = value
+
+    def set_extend_details(self, response, details):
+        extend_details = response.css('div.list__grid__item')
+        for extend_detail in extend_details:
+            key = extend_detail.xpath('./small/text()').get().strip()
+            value = extend_detail.xpath('./span/text()').get().strip() + extend_detail.xpath('./span/small/text()').get(
+                '').strip
+            details[key] = value
 
     home_type_dict = {
         "data": {
