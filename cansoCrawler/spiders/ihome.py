@@ -8,89 +8,50 @@ class IhomeSpider(scrapy.Spider):
     name = 'ihome'
     allowed_domains = ['ihome.ir']
     start_urls = ['https://scorpion.ihome.ir/v1/search-locations?type=CITY&title=']
-    transaction_type = "sell"
+    is_sell = 1
     base_url = ""
 
     def parse(self, response):
         json_response = json.loads(response.body.decode("UTF-8"))
         city_list = json_response["data"]
         for city in city_list:
+            self.logger.info("get neigh for %s city", city["location_slug"])
             yield response.follow(
                 "https://scorpion.ihome.ir/v1/search-locations?title=&parent_id={}&type=DISTRICT_SUB_DISTRICT".format(
                     city["id"]),
                 callback=self.parse_neighbourhood,
-                cb_kwargs={"city": city["title"], "url_part2": city["location_slug"]})
+                cb_kwargs={"city": city["title"]})
 
-    def parse_neighbourhood(self, response, city, url_part2):
+    def parse_neighbourhood(self, response, city):
+        number_of_ads = 10
+        _url = "https://scorpion.ihome.ir/v1/flatted-properties?is_sale={}&source=website&paginate={}&" \
+               "locations[]={}&property_type[]={}"
         json_response = json.loads(response.body.decode("UTF-8"))
         neigh_list = json_response["data"]
         for neigh in neigh_list:
             for category in self.home_type_dict["data"].values():
                 for sub_category in category["children"]:
-                    yield response.follow(
-                        "https://ihome.ir/{}-{}/{}/{}".format(self.transaction_type, sub_category["slug"], url_part2,
-                                                              neigh["location_slug"]),
-                        callback=self.parse_ads, cb_kwargs={"city": city, "neigh": neigh["title"],
-                                                            "category": category["label"],
-                                                            "sub_category": sub_category[
-                                                                "label"]})
+                    url = _url.format(self.is_sell, number_of_ads, neigh["path"],
+                                      sub_category["slug"])
+                    self.logger.info("get %s ads from: %s", number_of_ads, url)
+                    yield response.follow(url, callback=self.parse_ads,
+                                          cb_kwargs={"city": city, "neigh": neigh["title"],
+                                                     "category": category["label"],
+                                                     "sub_category": sub_category[
+                                                         "label"]})
 
     def parse_ads(self, response, city, neigh, category, sub_category):
-        links = response.css('div#result-row').xpath('./div/a/@href')
-        yield from response.follow_all(links, callback=self.parse_ad, cb_kwargs={"city": city, "neigh": neigh,
-                                                                                 "category": category,
-                                                                                 "sub_category": sub_category})
-
-    def parse_ad(self, response, city, neigh, category, sub_category):
-        details = {"empty": False}
-        self.set_first_details(response, details)
-        self.set_primary_details(response, details)
-        self.set_extend_details(response, details)
-        yield {
-            "subject": response.css('h1.property-detail_title::text').get('not-defined').strip(),
-            "price": self.get_price(response),
-            "city": city,
-            "neigh": neigh,
-            "category": category,
-            "sub_category": sub_category,
-            "url": response.request.url,
-            "description": response.css('div.property-detail_agency-box_description p::text').get(
-                'not-defined').strip(),
-            "details": details
-        }
-
-    def get_price(self, response):
-        price = ""
-        _price = response.css('div.property-detail_price-box').xpath('./div[2]')
-        price += _price.xpath('./strong[1]/text()').get().strip()
-        price += _price.xpath('./text()')[0].get().strip()
-        price += _price.xpath('./strong[2]/text()').get().strip()
-        price += _price.xpath('./text()')[1].get().strip()
-
-        return price
-
-    def set_first_details(self, response, details):
-        first_details = response.css('div.property-detail__icons')[0]
-        first_details_values = first_details.css('span.property-detail__icons-item__value span::text').getall()
-        first_details_keys = first_details.css('span.property-detail__icons-item__unit::text').getall()
-        for key, value in dict(zip(first_details_keys, first_details_values)):
-            if len(key.strip()) != 0 and len(value.strip()) != 0:
-                details[key] = value
-
-    def set_primary_details(self, response, details):
-        primary_details = response.css('div.properties__list')
-        for primary_detail in primary_details:
-            key = primary_detail.xpath('./small/text()').get().strip()
-            value = primary_detail.xpath('./span/text()').get().strip()
-            details[key] = value
-
-    def set_extend_details(self, response, details):
-        extend_details = response.css('div.list__grid__item')
-        for extend_detail in extend_details:
-            key = extend_detail.xpath('./small/text()').get().strip()
-            value = extend_detail.xpath('./span/text()').get().strip() + extend_detail.xpath('./span/small/text()').get(
-                '').strip
-            details[key] = value
+        json_response = json.loads(response.body.decode("UTF-8"))
+        ads = json_response["data"]
+        for ad in ads:
+            yield {
+                "subjetc": ad["title"],
+                "city": city,
+                "neigh": neigh,
+                "category": category,
+                "sub_category": sub_category,
+                "url": response.request.url
+            }
 
     home_type_dict = {
         "data": {

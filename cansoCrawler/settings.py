@@ -90,5 +90,5 @@ ROBOTSTXT_OBEY = False
 
 
 # LOG
-LOG_FILE = 'scrapy.log'
+LOG_FILE = 'spider.log'
 LOG_LEVEL = 'ERROR'
