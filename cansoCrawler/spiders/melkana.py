@@ -11,6 +11,10 @@ class MelkanaSpider(scrapy.Spider):
     deal_type = 0  # 0 => sell     1 => rent
     page_counter = 3
 
+    def __init__(self, deal_type, **kwargs):
+        self.deal_type = 1 if deal_type == "rent" else 0
+        super().__init__(**kwargs)
+
     def start_requests(self):
         headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:48.0) Gecko/20100101 Firefox/48.0'}
         url = 'https://www.melkana.com/v3/home/districts/'

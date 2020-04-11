@@ -11,6 +11,10 @@ class IhomeSpider(scrapy.Spider):
     is_sell = 1
     base_url = ""
 
+    def __init__(self, deal_type='buy', **kwargs):
+        self.is_sell = 0 if deal_type == "rent" else 1
+        super().__init__(**kwargs)
+
     def parse(self, response):
         json_response = json.loads(response.body.decode("UTF-8"))
         city_list = json_response["data"]
