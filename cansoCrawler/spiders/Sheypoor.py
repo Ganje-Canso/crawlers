@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import scrapy
 
-from cansoCrawler.cansoCrawler.items import SheypoorHomeItem, SheypoorCarItem
+from cansoCrawler.items import SheypoorHomeItem, SheypoorCarItem
 
 
 class SheypoorSpider(scrapy.Spider):
@@ -49,7 +49,7 @@ class SheypoorSpider(scrapy.Spider):
                                                   "page": page - 1})
 
         # get next page
-        if page <= 5:
+        if page <= 1:
             yield response.follow(base_url + "?p={}".format(page), callback=self.parse_ads,
                                   cb_kwargs={"base_url": base_url,
                                              "sub_category": sub_category,
@@ -59,13 +59,13 @@ class SheypoorSpider(scrapy.Spider):
     def parse_ad(self, response, sub_category, page):
         if self.category == 'home':
             item = SheypoorHomeItem()
-            item.parse(response)
             item['category'] = sub_category
+            item.extract(response)
             return item
         if self.category == 'car':
             item = SheypoorCarItem()
-            item.parse(response)
             item['category'] = sub_category
+            item.extract(response)
             return item
 
         return None

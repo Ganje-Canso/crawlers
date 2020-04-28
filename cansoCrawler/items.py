@@ -4,9 +4,9 @@
 #
 # See documentation in:
 # https://docs.scrapy.org/en/latest/topics/items.html
-import datetime
-
 import scrapy
+
+import datetime
 
 
 class BaseItem(scrapy.Item):
@@ -19,7 +19,6 @@ class BaseItem(scrapy.Item):
     province = scrapy.Field()
     city = scrapy.Field()
     neighbourhood = scrapy.Field()
-    type = scrapy.Field()
     production = scrapy.Field()
     price = scrapy.Field()
     description = scrapy.Field()
@@ -41,7 +40,6 @@ class BaseItem(scrapy.Item):
         self['province'] = 'not_defined'
         self['city'] = 'not_defined'
         self['neighbourhood'] = 'not_defined'
-        self['type'] = 'not_defined'
         self['production'] = -1
         self['price'] = -1
         self['description'] = 'not_defined'
@@ -133,12 +131,13 @@ class SheypoorBaseItem(BaseItem):
         self['title'] = response.css('section#item-details').xpath(
             './div[1]/h1[1]/text()').get(default="not-defined").strip()
         nav = response.css('nav#breadcrumbs ul').xpath('./li')
-        self['province'] = nav[2].xpath('./a/text()').get(default="not-defined").strip()
-        self['city'] = nav[3].xpath('./a/text()').get(default="not-defined").strip()
-        if len(nav) == 6:
-            self['neighbourhood'] = nav[4].xpath('./a/text()').get(default="not-defined").strip()
+        self['province'] = nav[1].xpath('./a/text()').get(default="not-defined").strip()
+        self['city'] = nav[2].xpath('./a/text()').get(default="not-defined").strip()
+        if len(nav) >= 6:
+            self['neighbourhood'] = nav[3].xpath('./a/text()').get(default="not-defined").strip()
         self['description'] = response.css('section#item-details p.description::text').get(
             default="not-defined").strip()
+        self['thumbnail'] = response.css('div#item-images img::attr(src)').get(default="not-defined")
 
 
 class SheypoorHomeItem(HomeBaseItem, SheypoorBaseItem):
@@ -241,3 +240,33 @@ class SheypoorCarItem(CarBaseItem, SheypoorBaseItem):
 
     def extract(self, response):
         SheypoorBaseItem.extract(self, response)
+        nav = response.css('nav#breadcrumbs ul').xpath('./li')
+        self['brand'] = nav[len(nav) - 1].xpath('./a/text()').get(default="not-defined").strip()
+        tr_list = response.css('section#item-details').xpath('./table/tr')
+        for tr in tr_list:
+            key = tr.xpath('./th/text()').get().strip()
+            value = tr.xpath('./td/text()').get().strip()
+            if 'سال تولید' in key:
+                self['production'] = value
+            if 'حجم موتور' in key:
+                pass
+            if 'قیمت' in key:
+                self['price'] = value
+            if 'مدل خودرو' in key:
+                self['model'] = value
+            if 'نقدی/اقساطی' in key:
+                self['cash_installment'] = value
+            if 'سال تولید' in key:
+                self['production'] = value
+            if 'کیلومتر' in key:
+                self['consumption'] = value
+            if 'رنگ' in key:
+                self['color'] = value
+            if 'گیربکس' in key:
+                self['gear_box'] = value
+            if 'نوع سوخت' in key:
+                self['fuel'] = value
+            if 'وضعیت بدنه' in key:
+                self['cody_condition'] = value
+            if 'نوع شاسی' in key:
+                self['chassis_type'] = value
