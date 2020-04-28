@@ -143,15 +143,67 @@ class SheypoorBaseItem(BaseItem):
 
 class SheypoorHomeItem(HomeBaseItem, SheypoorBaseItem):
 
-    def get_production(self, key):
-        return{
-            "نوساز": datetime.datetime.today().year-621,
-            "۲-۵ سال": datetime.datetime.today().year-624,
-            "۵-۱۰ سال": datetime.datetime.today().year-628,
-            "۱۰-۱۵ سال": datetime.datetime.today().year-633,
-            "۱۵-۲۰ سال": datetime.datetime.today().year-638,
-            "۲۰ سال به بالا": datetime.datetime.today().year-644,
-        }.get(key)
+    def get_production(self, data):
+        return {
+            "نوساز": datetime.datetime.today().year - 621,
+            "۲-۵ سال": datetime.datetime.today().year - 624,
+            "۵-۱۰ سال": datetime.datetime.today().year - 628,
+            "۱۰-۱۵ سال": datetime.datetime.today().year - 633,
+            "۱۵-۲۰ سال": datetime.datetime.today().year - 638,
+            "۲۰ سال به بالا": datetime.datetime.today().year - 644,
+        }.get(data)
+
+    def clean_sub_category(self, sub_category):
+        if 'رهن و اجاره خانه و آپارتمان' in self['category']:
+            self['category'] = 'اجاره مسکونی'
+            if 'آپارتمان' in sub_category:
+                self['sub_category'] = 'آپارتمان'
+            elif 'خانه' in sub_category:
+                self['sub_category'] = 'خانه و ویلا'
+            elif 'ویلا' in sub_category:
+                self['sub_category'] = 'خانه و ویلا'
+
+        elif 'خرید و فروش خانه و آپارتمان' in self['category']:
+            self['category'] = 'فروش مسکونی'
+            if 'آپارتمان' in sub_category:
+                self['sub_category'] = 'آپارتمان'
+            elif 'خانه و کلنگی' in sub_category:
+                self['sub_category'] = 'زمین و کلنگی'
+            elif 'ویلا' in sub_category:
+                self['sub_category'] = 'خانه و ویلا'
+
+        elif 'رهن و اجاره اداری و تجاری' in self['category']:
+            self['category'] = 'اجاره اداری و تجاری'
+            if 'اداری' in sub_category:
+                self['sub_category'] = 'دفتر کار اتاق اداری و مطب'
+            elif 'تجاری و مغازه' in sub_category:
+                self['sub_category'] = 'مغازه و غرفه'
+            elif 'صنعتی (سوله، انبار، کارگاه)' in sub_category:
+                self['sub_category'] = 'صنعتی, کشاورزی و تجاری'
+            elif 'دامداری و کشاورزی' in sub_category:
+                self['sub_category'] = 'صنعتی, کشاورزی و تجاری'
+
+        elif 'خرید و فروش اداری و تجاری' in self['category']:
+            self['category'] = 'فروش اداری و تجاری'
+            if 'اداری' in sub_category:
+                self['sub_category'] = 'دفتر کار اتاق اداری و مطب'
+            elif 'تجاری و مغازه' in sub_category:
+                self['sub_category'] = 'مغازه و غرفه'
+            elif 'صنعتی (سوله، انبار، کارگاه)' in sub_category:
+                self['sub_category'] = 'صنعتی, کشاورزی و تجاری'
+            elif 'دامداری و کشاورزی' in sub_category:
+                self['sub_category'] = 'صنعتی, کشاورزی و تجاری'
+
+        elif 'زمین و باغ' in self['category']:
+            self['category'] = 'زمین, کلنگی و باغ'
+            if 'مسکونی' in sub_category:
+                self['sub_category'] = 'مسکونی'
+            elif 'صنعتی' in sub_category:
+                self['sub_category'] = 'صنعتی, کشاورزی و تجاری'
+            elif 'اداری و تجاری' in sub_category:
+                self['sub_category'] = 'اداری و تجاری'
+            elif 'کشاورزی' in sub_category:
+                self['sub_category'] = 'صنعتی, کشاورزی و تجاری'
 
     def extract(self, response):
         SheypoorBaseItem.extract(self, response)
@@ -159,8 +211,6 @@ class SheypoorHomeItem(HomeBaseItem, SheypoorBaseItem):
         for tr in tr_list:
             key = tr.xpath('./th/text()').get().strip()
             value = tr.xpath('./td/text()').get().strip()
-            if 'نوع ملک' in key:
-                self['type'] = value
             if 'سن بنا' in key:
                 self['production'] = self.get_production(value)
             if 'پارکینگ' in key:
@@ -182,10 +232,12 @@ class SheypoorHomeItem(HomeBaseItem, SheypoorBaseItem):
             if 'قیمت' in key:
                 self['price'] = value
             if 'نوع کاربری' in key:
-                self['package'] = value
+                self.clean_sub_category(value)
+            elif 'نوع ملک' in key:
+                self.clean_sub_category(value)
 
 
-class SheypoorCarItem(CarBaseItem):
+class SheypoorCarItem(CarBaseItem, SheypoorBaseItem):
 
     def extract(self, response):
-        super(SheypoorCarItem, self).extract(response)
+        SheypoorBaseItem.extract(self, response)

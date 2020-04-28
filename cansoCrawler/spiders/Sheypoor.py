@@ -60,14 +60,12 @@ class SheypoorSpider(scrapy.Spider):
         if self.category == 'home':
             item = SheypoorHomeItem()
             item.parse(response)
-            item['category'] = self.translate_category()
-            item['sub_category'] = sub_category
+            item['category'] = sub_category
             return item
         if self.category == 'car':
             item = SheypoorCarItem()
             item.parse(response)
-            item['category'] = self.translate_category()
-            item['sub_category'] = sub_category
+            item['category'] = sub_category
             return item
 
         return None
