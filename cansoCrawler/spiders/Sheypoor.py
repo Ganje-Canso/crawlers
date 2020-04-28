@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import scrapy
 
-from cansoCrawler.items import SheypoorcrawlerItem
+from cansoCrawler.cansoCrawler.items import SheypoorHomeItem, SheypoorCarItem
 
 
 class SheypoorSpider(scrapy.Spider):
@@ -57,12 +57,20 @@ class SheypoorSpider(scrapy.Spider):
                                   )
 
     def parse_ad(self, response, sub_category, page):
-        item = SheypoorcrawlerItem()
-        item.clean(response)
-        item['sub_category'] = sub_category
-        item['category'] = self.translate_category()
-        item['page'] = page
-        return item
+        if self.category == 'home':
+            item = SheypoorHomeItem()
+            item.parse(response)
+            item['category'] = self.translate_category()
+            item['sub_category'] = sub_category
+            return item
+        if self.category == 'car':
+            item = SheypoorCarItem()
+            item.parse(response)
+            item['category'] = self.translate_category()
+            item['sub_category'] = sub_category
+            return item
+
+        return None
 
     def translate_category(self):
         return {
