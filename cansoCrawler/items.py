@@ -138,6 +138,9 @@ class SheypoorBaseItem(BaseItem):
         self['description'] = response.css('section#item-details p.description::text').get(
             default="not-defined").strip()
         self['thumbnail'] = response.css('div#item-images img::attr(src)').get(default="not-defined")
+        price = response.css('section#item-details span.item-price > strong::text').get(
+            default="").strip()
+        self['price'] = int(clean_price(price))
 
 
 class SheypoorHomeItem(HomeBaseItem, SheypoorBaseItem):
@@ -146,9 +149,13 @@ class SheypoorHomeItem(HomeBaseItem, SheypoorBaseItem):
         return {
             "نوساز": datetime.datetime.today().year - 621,
             "۲-۵ سال": datetime.datetime.today().year - 624,
+            "2-5 سال": datetime.datetime.today().year - 624,
             "۵-۱۰ سال": datetime.datetime.today().year - 628,
+            "5-10 سال": datetime.datetime.today().year - 628,
             "۱۰-۱۵ سال": datetime.datetime.today().year - 633,
+            "10-15 سال": datetime.datetime.today().year - 633,
             "۱۵-۲۰ سال": datetime.datetime.today().year - 638,
+            "15-20 سال": datetime.datetime.today().year - 638,
             "۲۰ سال به بالا": datetime.datetime.today().year - 644,
         }.get(data)
 
@@ -223,13 +230,11 @@ class SheypoorHomeItem(HomeBaseItem, SheypoorBaseItem):
             if 'تعداد اتاق' in key:
                 self['room'] = value
             if 'رهن' in key:
-                self['deposit'] = value
+                self['deposit'] = int(clean_price(value))
             if 'اجاره' in key:
-                self['rent'] = value
+                self['rent'] = int(clean_price(value))
             if 'رهن و اجاره' in key:
                 self['swap_deposit_rent'] = True
-            if 'قیمت' in key:
-                self['price'] = value
             if 'نوع کاربری' in key:
                 self.clean_sub_category(value)
             elif 'نوع ملک' in key:
@@ -250,8 +255,6 @@ class SheypoorCarItem(CarBaseItem, SheypoorBaseItem):
                 self['production'] = value
             if 'حجم موتور' in key:
                 pass
-            if 'قیمت' in key:
-                self['price'] = value
             if 'مدل خودرو' in key:
                 self['model'] = value
             if 'نقدی/اقساطی' in key:
@@ -270,3 +273,13 @@ class SheypoorCarItem(CarBaseItem, SheypoorBaseItem):
                 self['cody_condition'] = value
             if 'نوع شاسی' in key:
                 self['chassis_type'] = value
+
+
+def clean_price(data):
+    clean_data = "-1"
+    for c in str(data):
+        if c.isdigit():
+            if clean_data == "-1":
+                clean_data = ""
+            clean_data += c
+    return clean_data
