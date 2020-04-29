@@ -308,6 +308,80 @@ class SheypoorCarItem(CarBaseItem, SheypoorBaseItem):
                 self['chassis_type'] = value
 
 
+class BamaCarItem(CarBaseItem, BaseItem):
+
+    def create_subject(self, sections):
+        subject = ""
+        for subject_section in sections:
+            if not subject_section == sections[-1]:
+                subject += subject_section.strip()
+        return subject
+
+    def extract(self, response):
+        if self['category'] == 'car':
+            self['category'] = 'خودرو'
+            self['sub_category'] = 'سواری'
+        elif self['category'] == 'motorcycle':
+            self['category'] = 'موتورسیکلت و لوازم جانبی'
+        url = response.request.url
+        self['url'] = url
+        self['token'] = clean_number(url.split('-')[1])
+        info_right = response.css('div.inforight')
+        description = response.css('div.addetaildesc').xpath('./span/text()').get(default="not_defined").strip()
+        self['description'] = description
+        self['source_id'] = 2
+        self['time'] = int(datetime.datetime.now().timestamp())
+        title = self.create_subject(info_right.xpath('./div[1]/div[1]/h1[1]/span/text()').getall())
+        self['title'] = title
+        brand = response.css('div.breadcrumb-div-section ol').xpath('./li[3]/a/span/text()').get(
+            default="not_defined").strip()
+        self['brand'] = brand
+        model = response.css('div.breadcrumb-div-section ol').xpath('./li[4]/a/span/text()').get(
+            default="not_defined").strip()
+        self['model'] = model
+        self['production'] = clean_number(info_right.xpath('./div[1]/div[1]/h1[1]/span/text()').getall()[-1])
+        self['thumbnail'] = response.css('a.bamalightgallery-item::attr(href)').get(default="not_defined")
+        for detail in info_right.xpath('./p'):
+            _class = detail.css('::attr(class)').get()
+            if _class == "phone-mobile-block":
+                continue
+            key = detail.xpath('./span[1]/text()').get().strip()
+            if key == "رنگ":
+                value = detail.xpath('./span[2]/f[1]/text()').get(default="not_defined").strip()
+            elif key == 'محصول':
+                value = detail.xpath('./span[2]/a/text()').get(default="not_defined").strip()
+            else:
+                value = detail.xpath('./span[2]/text()').get(default="not_defined").strip()
+            if 'قیمت' in key:
+                if 'توضیحات' in value:
+                    self['price'] = clean_number(
+                        response.css('div.bama-tooltip-and-text').xpath('./div[2]/text()').get(-1).strip())
+                else:
+                    self['price'] = clean_number(value)
+            elif 'شهر' in key:
+                self['city'] = value
+            elif 'استان' in key:
+                self['province'] = value
+            elif 'كاركرد' in key:
+                self['consumption'] = clean_number(value)
+            elif 'رنگ' in key:
+                self['color'] = value
+            elif 'قسط' in key:
+                self['cash_installment'] = 'قسطی'
+            elif 'گیربکس' in key:
+                self['gear_box'] = value
+            elif 'محصول' in key:
+                self['company'] = value
+            elif 'محله' in key:
+                self['neighbourhood'] = value
+            elif 'بازديد' in key:
+                self['neighbourhood'] = value
+            elif 'بدنه' in key:
+                self['body_condition'] = value
+            elif 'سوخت' in key:
+                self['fuel'] = value
+
+
 def clean_number(data, int_type=True):
     clean_data = "-1"
     for c in str(data):
