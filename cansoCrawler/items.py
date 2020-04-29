@@ -125,7 +125,7 @@ class SheypoorBaseItem(BaseItem):
         url_sections = url.split('-')
         dirty_token = url_sections[len(url_sections) - 1]
         token = dirty_token[0:dirty_token.find('.htm')]
-        self['token'] = token
+        self['token'] = int(token)
         self['source_id'] = 1
         self['time'] = int(datetime.datetime.now().timestamp())
         self['title'] = response.css('section#item-details').xpath(
@@ -140,7 +140,7 @@ class SheypoorBaseItem(BaseItem):
         self['thumbnail'] = response.css('div#item-images img::attr(src)').get(default="not-defined")
         price = response.css('section#item-details span.item-price > strong::text').get(
             default="").strip()
-        self['price'] = int(clean_price(price))
+        self['price'] = clean_number(price)
 
 
 class SheypoorHomeItem(HomeBaseItem, SheypoorBaseItem):
@@ -226,13 +226,13 @@ class SheypoorHomeItem(HomeBaseItem, SheypoorBaseItem):
             if 'آسانسور' in key:
                 self['elevator'] = True
             if 'متراژ' in key:
-                self['area'] = value
+                self['area'] = clean_number(value)
             if 'تعداد اتاق' in key:
-                self['room'] = value
+                self['room'] = clean_number(value)
             if 'رهن' in key:
-                self['deposit'] = int(clean_price(value))
+                self['deposit'] = clean_number(value)
             if 'اجاره' in key:
-                self['rent'] = int(clean_price(value))
+                self['rent'] = clean_number(value)
             if 'رهن و اجاره' in key:
                 self['swap_deposit_rent'] = True
             if 'نوع کاربری' in key:
@@ -243,16 +243,46 @@ class SheypoorHomeItem(HomeBaseItem, SheypoorBaseItem):
 
 class SheypoorCarItem(CarBaseItem, SheypoorBaseItem):
 
+    def clean_category(self):
+        if 'خودرو' == self['category']:
+            self['sub_category'] = 'سواری'
+
+        elif 'موتور سیکلت' == self['category']:
+            self['category'] = 'موتورسیکلت و لوازم جانبی'
+
+        elif 'خودرو کلاسیک' == self['category']:
+            self['category'] = 'خودرو'
+            self['sub_category'] = 'کلاسیک'
+
+        elif 'سنگین و نیمه سنگین' == self['category']:
+            self['category'] = 'خودرو'
+            self['sub_category'] = 'سنگین'
+
+        elif 'کشاورزی و عمرانی' == self['category']:
+            self['category'] = 'خودرو'
+            self['sub_category'] = 'سنگین'
+
+        elif 'لوازم و قطعات وسایل نقلیه' == self['category']:
+            self['category'] = 'قطعات یدکی و لوازم جانبی خودرو'
+
+        elif 'اجاره خودرو' == self['category']:
+            self['category'] = 'خودرو'
+            self['sub_category'] = 'اجاره‌ای'
+
+        elif 'سایر وسایل نقلیه' == self['category']:
+            pass
+
     def extract(self, response):
         SheypoorBaseItem.extract(self, response)
         nav = response.css('nav#breadcrumbs ul').xpath('./li')
-        self['brand'] = nav[len(nav) - 1].xpath('./a/text()').get(default="not-defined").strip()
+        brand = nav[len(nav) - 1].xpath('./a/text()').get(default="not-defined").strip()
+        if self['category'] not in brand:
+            self['brand'] = brand
+        self.clean_category()
         tr_list = response.css('section#item-details').xpath('./table/tr')
         for tr in tr_list:
             key = tr.xpath('./th/text()').get().strip()
             value = tr.xpath('./td/text()').get().strip()
-            if 'سال تولید' in key:
-                self['production'] = value
             if 'حجم موتور' in key:
                 pass
             if 'مدل خودرو' in key:
@@ -260,9 +290,9 @@ class SheypoorCarItem(CarBaseItem, SheypoorBaseItem):
             if 'نقدی/اقساطی' in key:
                 self['cash_installment'] = value
             if 'سال تولید' in key:
-                self['production'] = value
+                self['production'] = clean_number(value)
             if 'کیلومتر' in key:
-                self['consumption'] = value
+                self['consumption'] = clean_number(value)
             if 'رنگ' in key:
                 self['color'] = value
             if 'گیربکس' in key:
@@ -270,16 +300,18 @@ class SheypoorCarItem(CarBaseItem, SheypoorBaseItem):
             if 'نوع سوخت' in key:
                 self['fuel'] = value
             if 'وضعیت بدنه' in key:
-                self['cody_condition'] = value
+                self['body_condition'] = value
             if 'نوع شاسی' in key:
                 self['chassis_type'] = value
 
 
-def clean_price(data):
+def clean_number(data, int_type=True):
     clean_data = "-1"
     for c in str(data):
         if c.isdigit():
             if clean_data == "-1":
                 clean_data = ""
             clean_data += c
+    if int_type:
+        return int(clean_data)
     return clean_data
