@@ -125,7 +125,10 @@ class SheypoorBaseItem(BaseItem):
         url_sections = url.split('-')
         dirty_token = url_sections[len(url_sections) - 1]
         token = dirty_token[0:dirty_token.find('.htm')]
-        self['token'] = int(token)
+        try:
+            self['token'] = int(token)
+        except:
+            self['token'] = -1
         self['source_id'] = 1
         self['time'] = int(datetime.datetime.now().timestamp())
         self['title'] = response.css('section#item-details').xpath(
@@ -157,7 +160,7 @@ class SheypoorHomeItem(HomeBaseItem, SheypoorBaseItem):
             "۱۵-۲۰ سال": datetime.datetime.today().year - 638,
             "15-20 سال": datetime.datetime.today().year - 638,
             "۲۰ سال به بالا": datetime.datetime.today().year - 644,
-        }.get(data)
+        }.get(data, -1)
 
     def clean_sub_category(self, sub_category):
         if 'رهن و اجاره خانه و آپارتمان' in self['category']:
