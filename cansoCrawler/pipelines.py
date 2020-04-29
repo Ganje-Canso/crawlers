@@ -36,4 +36,10 @@ class CansocrawlerPipeline(object):
         return item
 
     def save_car_data(self, item):
-        pass
+        try:
+            self.cursor.execute(
+                f"call save_car_data({item['token']}, {item['source_id']}, {item['time']}, '{item['title']}', '{item['category']}', '{item['sub_category']}', '{item['province']}', '{item['city']}', '{item['neighbourhood']}', {item['production']}, {item['price']}, '{item['description']}', '{item['url']}', '{item['thumbnail']}', {item['latitude']}, {item['longitude']}, '{item['tell']}', {item['swap']}, '{item['brand']}', {item['consumption']}, '{item['color']}', '{item['cash_installment']}', '{item['gear_box']}', '{item['company']}', '{item['chassis_type']}', '{item['model']}', '{item['body_condition']}', '{item['fuel']}')")
+            self.conn.commit()
+        except:
+            self.conn.rollback()
+        return item

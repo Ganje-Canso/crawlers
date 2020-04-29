@@ -15,9 +15,9 @@ CREATE OR REPLACE PROCEDURE save_car_data(_token bigint, _source_id integer, _ti
 LANGUAGE 'plpgsql' AS $$
 BEGIN
 
-INSERT INTO home (token, source_id, time, title, category, sub_category, province, city, neighbourhood, production, price, description, url, thumbnail, latitude, longitude, tell, swap, brand, consumption, color, cash_installment, gear_box, company, chassis_type, model, body_condition, fuel)
+INSERT INTO car (token, source_id, time, title, category, sub_category, province, city, neighbourhood, production, price, description, url, thumbnail, latitude, longitude, tell, swap, brand, consumption, color, cash_installment, gear_box, company, chassis_type, model, body_condition, fuel)
 VALUES (_token, _source_id, _time, _title, _category, _sub_category, _province, _city, _neighbourhood, _production, _price, _description, _url, _thumbnail, _latitude, _longitude, _tell, _swap, _brand, _consumption, _color, _cash_installment, _gear_box, _company, _chassis_type, _model, _body_condition, _fuel);
-COMMIT;
+
 
 END;
 $$;
