@@ -2,9 +2,13 @@ CREATE OR REPLACE PROCEDURE save_home_data(_token bigint, _source_id integer, _t
 LANGUAGE 'plpgsql' AS $$
 BEGIN
 
+PERFORM * FROM home WHERE token = _token;
+IF NOT FOUND THEN
+
 INSERT INTO home (token, source_id, time, title ,category ,sub_category ,province ,city , neighbourhood ,advertiser ,production , room, area, price , deposit, rent, description, url, thumbnail, latitude, longitude, tell, swap, administrative_document, parking, elevator, storeroom, swap_deposit_rent, balcony, estate_floor, estate_direction, package, kitchen, cooler, floor_covering)
 VALUES (_token, _source_id, _time, _title ,_category ,_sub_category ,_province ,_city , _neighbourhood ,_advertiser ,_production , _room, _area, _price , _deposit, _rent, _description, _url, _thumbnail, _latitude, _longitude, _tell, _swap, _administrative_document, _parking, _elevator, _storeroom, _swap_deposit_rent, _balcony, _estate_floor, _estate_direction, _package, _kitchen, _cooler, _floor_covering);
 
+END IF;
 
 END;
 $$;
@@ -15,9 +19,13 @@ CREATE OR REPLACE PROCEDURE save_car_data(_token bigint, _source_id integer, _ti
 LANGUAGE 'plpgsql' AS $$
 BEGIN
 
+PERFORM * FROM car WHERE token = _token;
+IF NOT FOUND THEN
+
 INSERT INTO car (token, source_id, time, title, category, sub_category, province, city, neighbourhood, production, price, description, url, thumbnail, latitude, longitude, tell, swap, brand, consumption, color, cash_installment, gear_box, company, chassis_type, model, body_condition, fuel)
 VALUES (_token, _source_id, _time, _title, _category, _sub_category, _province, _city, _neighbourhood, _production, _price, _description, _url, _thumbnail, _latitude, _longitude, _tell, _swap, _brand, _consumption, _color, _cash_installment, _gear_box, _company, _chassis_type, _model, _body_condition, _fuel);
 
+END IF;
 
 END;
 $$;

@@ -22,7 +22,7 @@ class BamaSpider(scrapy.Spider):
                              cb_kwargs={"category": "motorcycle",
                                         "base_url": base_url})
 
-    def parse(self, response, category, base_url, page=2):
+    def parse(self, response, category="", base_url="", page=2):
         self.logger.info("get ads from page: %s", page - 1)
         yield from response.follow_all(self.get_ad_links(response, category), callback=self.parse_ad,
                                        cb_kwargs={"category": category})
