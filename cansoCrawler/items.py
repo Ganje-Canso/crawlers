@@ -439,7 +439,7 @@ class KilidHomeItem(HomeBaseItem, BaseItem):
     def extract(self, data_dict):
         self['token'] = clean_number(data_dict['listingId'] or "")
         self['source_id'] = 3
-        self['time'] = int(data_dict['listingDate']/1000 or datetime.datetime.now().timestamp())
+        self['time'] = int(data_dict['listingDate'] / 1000 or datetime.datetime.now().timestamp())
         self['title'] = data_dict['title'] or "not_defined"
         self['city'] = data_dict['city'] or "not_defined"
         self['neighbourhood'] = data_dict['neighbourhood'] or "not_defined"
@@ -456,6 +456,81 @@ class KilidHomeItem(HomeBaseItem, BaseItem):
         self['parking'] = data_dict['noParkings'] is not None
         self.check_features(data_dict['features'])
         self.set_category(data_dict['landuseType'], data_dict['propertyType'])
+
+
+class IhomeHomeItem(HomeBaseItem, BaseItem):
+
+    def get_img(self, dict_data):
+        if 'media' in dict_data:
+            if 'images' in dict_data['media']:
+                if len(dict_data['media']['images']) > 0:
+                    return f"https://media.ihome.ir{dict_data['media']['images'][0]['ls500']['url']}"
+        return "not_defined"
+
+    def get_direction(self, list_data):
+        data = ""
+        for _dict in list_data:
+            data += ',' + self.translate_direction(_dict['name'])
+        return data
+
+    def translate_direction(self, key):
+        return {
+            'southern': 'جنوبی',
+            'northern': 'شمالی'
+        }.get(key, key)
+
+    def get_floor_cover(self, list_data):
+        data = ""
+        for _dict in list_data:
+            data += ',' + self.translate_floor_cover(_dict['name'])
+        return data
+
+    def translate_floor_cover(self, key):
+        return {
+            'ceramic': 'سرامیک'
+        }.get(key, key)
+
+    def check_meta(self, dict_data):
+        if dict_data['meta'] is None:
+            return
+        for primary_dict in dict_data['meta']['primary']:
+            if primary_dict['key'] == 'completion_year':
+                self['production'] = -1 if primary_dict[
+                                               'value'] is None else datetime.datetime.today().year - 621 - int(
+                    primary_dict['value'])
+            if primary_dict['key'] == 'number_of_bedrooms':
+                self['room'] = int(primary_dict['value'] or -1)
+        for secondary_dict in dict_data['meta']['secondary']:
+            if secondary_dict['key'] == 'elevator':
+                self['elevator'] = int(secondary_dict['value'] or -1) > 0
+            if secondary_dict['key'] == 'storage_areas':
+                self['storeroom'] = int(secondary_dict['value'] or -1) > 0
+            if secondary_dict['key'] == 'parking_spaces':
+                self['parking'] = int(secondary_dict['value'] or -1) > 0
+            if secondary_dict['key'] == 'balcony_or_terrace':
+                self['balcony'] = int(secondary_dict['value'] or -1) > 0
+            if secondary_dict['key'] == 'swap':
+                self['swap'] = True
+        for other_dict in dict_data['meta']['others']:
+            if other_dict['key'] == 'position':
+                other_dict['estate_direction '] = self.get_direction(other_dict['values'])
+            if other_dict['key'] == 'flooring':
+                other_dict['floor_covering '] = self.get_floor_cover(other_dict['values'])
+
+    def extract(self, dict_data):
+        self['token'] = dict_data['id']
+        self['source_id'] = 4
+        self['time'] = int(datetime.datetime.strptime(dict_data['published_at'], '%Y-%m-%d %H:%M:%S').timestamp())
+        self['title'] = dict_data['title']
+        self['advertiser'] = dict_data['agency'].get('name', "not_defined")
+        self['area'] = dict_data['area'] or -1
+        self['price'] = dict_data['price'] or -1
+        self['deposit'] = dict_data['deposit'] or -1
+        self['rent'] = dict_data['rent'] or -1
+        self['description'] = dict_data['description'] or "not_defined"
+        self['thumbnail'] = self.get_img(dict_data)
+        self['tell'] = dict_data['agent'].get('mobile', "not_defined")
+        self.check_meta(dict_data)
 
 
 def clean_number(data, int_type=True):

@@ -9,6 +9,7 @@ class SheypoorSpider(scrapy.Spider):
     allowed_domains = ['sheypoor.com']
     start_urls = ['https://sheypoor.com/']
     category = ''
+    _pages = 2
 
     def __init__(self, category='none', **kwargs):
         self.category = category
@@ -49,7 +50,7 @@ class SheypoorSpider(scrapy.Spider):
                                                   "page": page - 1})
 
         # get next page
-        if page <= 1:
+        if page <= self._pages:
             yield response.follow(base_url + "?p={}".format(page), callback=self.parse_ads,
                                   cb_kwargs={"base_url": base_url,
                                              "sub_category": sub_category,

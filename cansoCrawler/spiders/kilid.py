@@ -10,7 +10,7 @@ class KilidSpider(scrapy.Spider):
     name = 'kilid'
     allowed_domains = ['kilid.com']
     start_urls = ['https://api.kilid.com/api/location/getAllCities/portal']
-    page_count = 2
+    _pages = 2
 
     def parse(self, response):
         city_dict = json.loads(response.body.decode("UTF-8"))
@@ -20,7 +20,7 @@ class KilidSpider(scrapy.Spider):
                 body = {"locations": [{"type": "city", "locationId": str(city["locationId"])}], "subType": deal_type,
                         "type": "listing",
                         "sort": "kilid,DESC"}
-                for page in range(1, self.page_count):
+                for page in range(1, self._pages):
                     yield scrapy.Request(
                         "https://api.kilid.com/api/listing/search/portal/v2.0?page={}&sort=kilid,DESC".format(
                             page),

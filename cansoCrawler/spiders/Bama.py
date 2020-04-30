@@ -7,6 +7,7 @@ from cansoCrawler.items import BamaCarItem
 class BamaSpider(scrapy.Spider):
     name = 'bama'
     allowed_domains = ['bama.ir']
+    _pages = 2
 
     def start_requests(self):
         url = "https://bama.ir/"
@@ -27,7 +28,7 @@ class BamaSpider(scrapy.Spider):
                                        cb_kwargs={"category": category})
 
         # get next page
-        if page <= 1:
+        if page <= self._pages:
             yield response.follow(base_url + "{}".format(page), callback=self.parse,
                                   cb_kwargs={"page": page + 1})
 
