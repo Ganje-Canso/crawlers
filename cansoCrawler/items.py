@@ -382,6 +382,82 @@ class BamaCarItem(CarBaseItem, BaseItem):
                 self['fuel'] = value
 
 
+class KilidHomeItem(HomeBaseItem, BaseItem):
+    deal_type = scrapy.Field()
+
+    def get_production(self, data):
+        if data is None:
+            return -1
+        else:
+            return datetime.datetime.today().year - 621 - int(data)
+
+    def get_thumbnail(self, data):
+        if data is None:
+            return "not_defined"
+        elif len(data) > 0:
+            return data[0]['pictureUrlSmall']
+        else:
+            return "not_defined"
+
+    def check_features(self, data):
+        if data is None:
+            return
+        for _dict in data:
+            if _dict['nameLat'] == 'balcony':
+                self['balcony'] = True
+            elif _dict['nameLat'] == 'storage':
+                self['storeroom'] = True
+            elif _dict['nameLat'] == 'elevator':
+                self['elevator'] = True
+
+    def set_category(self, use_type, estate_type):
+        if use_type == 'مسکونی':
+            self['category'] = f'{"فروش" if self["deal_type"] == "buy" else "اجاره"} مسکونی'
+            if estate_type == 'آپارتمان':
+                self['sub_category'] = 'آپارتمان'
+            elif estate_type == 'ویلایی' or estate_type == 'پنت هاوس' or estate_type == 'برج':
+                self['sub_category'] = 'خانه و ویلا'
+            elif estate_type == 'زمین/کلنگی':
+                self['sub_category'] = 'زمین و کلنگی'
+        if use_type == 'اداری' or use_type == 'تجاری' or use_type == 'صنعتی':
+            self['category'] = f'{"فروش" if self["deal_type"] == "buy" else "اجاره"} اداری و تجاری'
+            if estate_type == 'مغازه':
+                self['sub_category'] = 'مغازه و غرفه'
+            if estate_type == 'زمین/کلنگی':
+                pass
+            if estate_type == 'مستغلات':
+                pass
+            if estate_type == 'باغ/باغچه':
+                self['sub_category'] = 'صنعتی،‌ کشاورزی و تجاری'
+            if estate_type == 'ویلایی':
+                self['sub_category'] = 'دفتر کار، اتاق اداری و مطب'
+            if estate_type == 'آپارتمان':
+                self['sub_category'] = 'دفتر کار، اتاق اداری و مطب'
+            if estate_type == 'کارخانه' or estate_type == 'کارگاه' or estate_type == 'انبار/سوله':
+                self['sub_category'] = 'صنعتی،‌ کشاورزی و تجاری'
+
+    def extract(self, data_dict):
+        self['token'] = clean_number(data_dict['listingId'] or "")
+        self['source_id'] = 3
+        self['time'] = int(data_dict['listingDate']/1000 or datetime.datetime.now().timestamp())
+        self['title'] = data_dict['title'] or "not_defined"
+        self['city'] = data_dict['city'] or "not_defined"
+        self['neighbourhood'] = data_dict['neighbourhood'] or "not_defined"
+        self['production'] = self.get_production(data_dict['age'])
+        self['room'] = int(data_dict['noBeds'] or -1)
+        self['area'] = int(data_dict['floorArea'] or -1)
+        self['price'] = int(data_dict['price'] or -1)
+        self['deposit'] = int(data_dict['deposit'] or -1)
+        self['rent'] = int(data_dict['rent'] or -1)
+        self['description'] = data_dict['description'] or "not_defined"
+        self['thumbnail'] = self.get_thumbnail(data_dict['pictures'])
+        self['latitude'] = float(data_dict['latitude'] or -1)
+        self['longitude'] = float(data_dict['longitude'] or -1)
+        self['parking'] = data_dict['noParkings'] is not None
+        self.check_features(data_dict['features'])
+        self.set_category(data_dict['landuseType'], data_dict['propertyType'])
+
+
 def clean_number(data, int_type=True):
     clean_data = "-1"
     for c in str(data):

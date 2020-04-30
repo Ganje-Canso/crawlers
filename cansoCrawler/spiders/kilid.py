@@ -3,57 +3,48 @@ import json
 
 import scrapy
 
+from cansoCrawler.items import KilidHomeItem
+
 
 class KilidSpider(scrapy.Spider):
     name = 'kilid'
     allowed_domains = ['kilid.com']
     start_urls = ['https://api.kilid.com/api/location/getAllCities/portal']
-    deal_type = "buy"
-    page_count = 3
-
-    def __init__(self, deal_type='buy', **kwargs):
-        if deal_type == "rent":
-            self.deal_type = "rent"
-        else:
-            self.deal_type = "buy"
-        super().__init__(**kwargs)
+    page_count = 2
 
     def parse(self, response):
         city_dict = json.loads(response.body.decode("UTF-8"))
         city_list = city_dict["content"]
         for city in city_list:
-            body = {"locations": [{"type": "city", "locationId": str(city["locationId"])}], "subType": self.deal_type,
-                    "type": "listing",
-                    "sort": "kilid,DESC"}
-            for page in range(1, self.page_count):
-                yield scrapy.Request(
-                    "https://api.kilid.com/api/listing/search/portal/v2.0?page={}&sort=kilid,DESC".format(
-                        page),
-                    method='post',
-                    body=json.dumps(body), headers={"Content-Type": "application/json"},
-                    callback=self.parse_ads,
-                    cb_kwargs={"page": page})
+            for deal_type in self.deal_type_list:
+                body = {"locations": [{"type": "city", "locationId": str(city["locationId"])}], "subType": deal_type,
+                        "type": "listing",
+                        "sort": "kilid,DESC"}
+                for page in range(1, self.page_count):
+                    yield scrapy.Request(
+                        "https://api.kilid.com/api/listing/search/portal/v2.0?page={}&sort=kilid,DESC".format(
+                            page),
+                        method='post',
+                        body=json.dumps(body), headers={"Content-Type": "application/json"},
+                        callback=self.parse_ads,
+                        cb_kwargs={"deal_type": deal_type})
 
-    def parse_ads(self, response, page):
+    def parse_ads(self, response, deal_type):
         ads_list = json.loads(response.body.decode("UTF-8"))["content"]
         if len(ads_list) == 0:
             return
         for ad in ads_list:
             if "id" in ad.keys():
                 yield response.follow(url="https://api.kilid.com/api/listing/{}/single/v5".format(ad["id"]),
-                                      callback=self.parse_ad, cb_kwargs={"page": page})
+                                      callback=self.parse_ad, cb_kwargs={"deal_type": deal_type})
 
-    def parse_ad(self, response, page):
+    def parse_ad(self, response, deal_type):
         ad = json.loads(response.body.decode('UTF-8'))
-        yield {
-            "id": ad["listingId"],
-            "subject": ad["title"],
-            "page": page,
-            "rent": ad["rent"],
-            "deposit": ad["deposit"],
-            "price": ad["price"],
-            "deal_type": self.deal_type
-        }
+        item = KilidHomeItem()
+        item['deal_type'] = deal_type
+        item['url'] = response.request.url
+        item.extract(ad)
+        return item
 
     home_type_dict = {
         1: {
@@ -161,3 +152,5 @@ class KilidSpider(scrapy.Spider):
             }
         },
     }
+
+    deal_type_list = ['buy', 'rent']
