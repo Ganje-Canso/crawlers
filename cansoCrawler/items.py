@@ -533,6 +533,50 @@ class IhomeHomeItem(HomeBaseItem, BaseItem):
         self.check_meta(dict_data)
 
 
+class MelkanaHomeItem(HomeBaseItem, BaseItem):
+
+    def check_features(self, features):
+        if 'کولر' in features:
+            self['cooler'] = True
+        if 'پارکینگ' in features:
+            self['parking'] = True
+        if 'آسانسور' in features:
+            self['elevator'] = True
+        if 'انباری' in features:
+            self['storeroom'] = True
+        if 'بالکن' in features:
+            self['balcony'] = True
+        if 'پکیج' in features:
+            self['package'] = True
+
+    def extract(self, dict_data):
+        details = dict_data['details']
+        self['token'] = int(details['code'])
+        self['source_id'] = 5
+        self['time'] = int(datetime.datetime.now().timestamp())
+        self['title'] = details['title'] or 'not_defined'
+        self['province'] = 'تهران'
+        self['city'] = 'تهران'
+        self['production'] = -1 if details['estate_age'] is None else datetime.datetime.today().year - 621 - int(
+                    details['estate_age'])
+        self['room'] = int(details['rooms'] or -1)
+        self['area'] = int(details['foundation'] or -1)
+        if details['deal_type'] == 'فروش':
+            self['price'] = clean_number(details['price'])
+        else:
+            self['deposit'] = clean_number(details['price'])
+        self['rent'] = clean_number(details['price_rent'])
+        self['description'] = details['description'] or details['features'] or 'not_defined'
+        self['thumbnail'] = details['image_360'] or 'not_defined'
+        self['latitude'] = dict_data['myLatLng']['lat']
+        self['longitude'] = dict_data['myLatLng']['lng']
+        self['estate_floor'] = details['estate_floor']
+        self['estate_direction'] = details['estate_direction']
+        self['kitchen'] = details['kitchen']
+        self['floor_covering'] = details['floor_covering']
+        self.check_features(details['features'])
+
+
 def clean_number(data, int_type=True):
     clean_data = "-1"
     for c in str(data):

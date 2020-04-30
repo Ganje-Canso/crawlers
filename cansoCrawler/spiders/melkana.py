@@ -4,16 +4,14 @@ import json
 import scrapy
 from scrapy import FormRequest
 
+from cansoCrawler.items import MelkanaHomeItem
+
 
 class MelkanaSpider(scrapy.Spider):
     name = 'melkana'
     allowed_domains = ['melkana.com']
-    deal_type = 0  # 0 => sell     1 => rent
-    page_counter = 3
-
-    def __init__(self, deal_type, **kwargs):
-        self.deal_type = 1 if deal_type == "rent" else 0
-        super().__init__(**kwargs)
+    # deal_type  0 => sell  1 => rent
+    _pages = 2
 
     def start_requests(self):
         headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:48.0) Gecko/20100101 Firefox/48.0'}
@@ -28,40 +26,52 @@ class MelkanaSpider(scrapy.Spider):
                 self.logger.info("get ads for this estate_type: %s", estate_type["name"])
                 for estate_document in self.estate_document_list:
                     self.logger.info("get ads for this estate_document: %s", estate_document["name"])
-                    for page in range(1, self.page_counter):
-                        form_data = self.create_form_data(neigh["marker_latitude"], neigh["marker_longitude"],
-                                                          estate_type["id"],
-                                                          estate_document["id"], page)
-                        headers = {
-                            'Accept': 'application/json',
-                            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:48.0) Gecko/20100101 Firefox/48.0'
-                        }
-                        yield FormRequest("https://www.melkana.com/v3/home/boundaries", method='POST',
-                                          formdata=form_data,
-                                          cb_kwargs={"neigh": neigh["name"], "estate_type": estate_type["name"],
-                                                     "estate_document": estate_document["name"], "page": page,
-                                                     "frm_data": form_data},
-                                          callback=self.parse_ads, headers=headers)
+                    for deal_type in [0, 1]:
+                        for page in range(1, self._pages):
+                            form_data = self.create_form_data(neigh["marker_latitude"], neigh["marker_longitude"],
+                                                              estate_type["id"],
+                                                              estate_document["id"], page, deal_type)
 
-    def parse_ads(self, response, neigh, estate_type, estate_document, page, frm_data):
-        self.logger.info("gte ads for this form_data: %s", frm_data)
+                            yield FormRequest("https://www.melkana.com/v3/home/boundaries", method='POST',
+                                              formdata=form_data,
+                                              cb_kwargs={"neigh": neigh["name"], "estate_type": estate_type["name"],
+                                                         "estate_document": estate_document["name"], "page": page,
+                                                         "deal_type": deal_type},
+                                              callback=self.parse_ads, headers=self.headers)
+
+    def parse_ads(self, response, neigh, estate_type, estate_document, page, deal_type):
         self.logger.info("get ads for this page: %s", page)
         estate_list = json.loads(response.body.decode('UTF-8'))['estate_list']
         for estate in estate_list:
-            yield {
-                "subject": estate["title"],
-                "neigh": neigh,
-                "estate_type": estate_type,
-                "estate_document": estate_document,
-                "page": page
-            }
+            yield response.follow(url=f'https://www.melkana.com/v3/home/estate/{estate["code"]}',
+                                  callback=self.parse_ad,
+                                  method='GET',
+                                  headers=self.headers,
+                                  cb_kwargs={"neigh": neigh, "estate_type": estate_type,
+                                             "estate_document": estate_document,
+                                             "deal_type": deal_type})
 
-    def create_form_data(self, lat, lon, estate_type, estate_document, page):
+    def parse_ad(self, response, neigh, estate_type, estate_document, deal_type):
+        dict_data = json.loads(response.body.decode('UTF-8'))
+        if dict_data['status'] != 'success':
+            pass
+        item = MelkanaHomeItem()
+        item['url'] = response.request.url
+        item['neighbourhood'] = neigh
+        item['category'] = ('فروش ' if deal_type == 0 else "اجاره ") + estate_document
+        if 'تجاری' in estate_document:
+            item['sub_category'] = 'دفتر کار، اتاق اداری و مطب'
+        else:
+            item['sub_category'] = estate_type
+        item.extract(dict_data)
+        return item
+
+    def create_form_data(self, lat, lon, estate_type, estate_document, page, deal_type):
         return {
             "filters[sort][title]": "جدیدترین ها",
             "filters[sort][model]": "approve_time",
             "filters[sort][order]": "desc",
-            "filters[deal_type]": str(self.deal_type),
+            "filters[deal_type]": str(deal_type),
             "filters[deal_type_mobile]": "0",
             "filters[has_tour]": "0",
             "filters[estate_type]": str(estate_type),
@@ -138,7 +148,7 @@ class MelkanaSpider(scrapy.Spider):
         },
         {
             "id": 1,
-            "name": "ویلایی"
+            "name": "خانه و ویلا"
         }
     ]
     estate_document_list = [
@@ -148,6 +158,10 @@ class MelkanaSpider(scrapy.Spider):
         },
         {
             "id": 1,
-            "name": "اداری"
+            "name": "اداری و تجاری"
         }
     ]
+    headers = {
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:48.0) Gecko/20100101 Firefox/48.0'
+    }
