@@ -5,6 +5,8 @@ import scrapy
 
 from cansoCrawler.items import IhomeHomeItem
 
+from cansoCrawler.models.utilities import get_province
+
 
 class IhomeSpider(scrapy.Spider):
     name = 'ihome'
@@ -55,6 +57,7 @@ class IhomeSpider(scrapy.Spider):
             item["sub_category"] = sub_category
             item["url"] = response.request.url
             item.extract(ad)
+            item['province'] = get_province(item['city'])
             return item
 
     home_type_dict = {

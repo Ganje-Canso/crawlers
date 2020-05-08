@@ -126,10 +126,10 @@ class SheypoorBaseItem(BaseItem):
         dirty_token = url_sections[len(url_sections) - 1]
         token = dirty_token[0:dirty_token.find('.htm')]
         try:
-            self['token'] = int(token)
+            self['token'] = hash_token(token)
         except:
             self['token'] = -1
-        self['source_id'] = 1
+        self['source_id'] = 2
         self['time'] = int(datetime.datetime.now().timestamp())
         self['title'] = response.css('section#item-details').xpath(
             './div[1]/h1[1]/text()').get(default="not-defined").strip()
@@ -325,11 +325,11 @@ class BamaCarItem(CarBaseItem, BaseItem):
             self['category'] = 'موتورسیکلت و لوازم جانبی'
         url = response.request.url
         self['url'] = url
-        self['token'] = clean_number(url.split('-')[1])
+        self['token'] = hash_token(url.split('-')[1])
         info_right = response.css('div.inforight')
         description = response.css('div.addetaildesc').xpath('./span/text()').get(default="not_defined").strip()
         self['description'] = description
-        self['source_id'] = 2
+        self['source_id'] = 3
         self['time'] = int(datetime.datetime.now().timestamp())
         title = self.create_subject(info_right.xpath('./div[1]/div[1]/h1[1]/span/text()').getall())
         self['title'] = title
@@ -437,8 +437,8 @@ class KilidHomeItem(HomeBaseItem, BaseItem):
                 self['sub_category'] = 'صنعتی،‌ کشاورزی و تجاری'
 
     def extract(self, data_dict):
-        self['token'] = clean_number(data_dict['listingId'] or "")
-        self['source_id'] = 3
+        self['token'] = hash_token(data_dict['listingId'] or "-1")
+        self['source_id'] = 4
         self['time'] = int(data_dict['listingDate'] / 1000 or datetime.datetime.now().timestamp())
         self['title'] = data_dict['title'] or "not_defined"
         self['city'] = data_dict['city'] or "not_defined"
@@ -518,8 +518,8 @@ class IhomeHomeItem(HomeBaseItem, BaseItem):
                 other_dict['floor_covering '] = self.get_floor_cover(other_dict['values'])
 
     def extract(self, dict_data):
-        self['token'] = dict_data['id']
-        self['source_id'] = 4
+        self['token'] = hash_token(dict_data['id'])
+        self['source_id'] = 5
         self['time'] = int(datetime.datetime.strptime(dict_data['published_at'], '%Y-%m-%d %H:%M:%S').timestamp())
         self['title'] = dict_data['title']
         self['advertiser'] = dict_data['agency'].get('name', "not_defined")
@@ -551,14 +551,14 @@ class MelkanaHomeItem(HomeBaseItem, BaseItem):
 
     def extract(self, dict_data):
         details = dict_data['details']
-        self['token'] = int(details['code'])
-        self['source_id'] = 5
+        self['token'] = hash_token(details['code'])
+        self['source_id'] = 6
         self['time'] = int(datetime.datetime.now().timestamp())
         self['title'] = details['title'] or 'not_defined'
         self['province'] = 'تهران'
         self['city'] = 'تهران'
         self['production'] = -1 if details['estate_age'] is None else datetime.datetime.today().year - 621 - int(
-                    details['estate_age'])
+            details['estate_age'])
         self['room'] = int(details['rooms'] or -1)
         self['area'] = int(details['foundation'] or -1)
         if details['deal_type'] == 'فروش':
@@ -577,6 +577,699 @@ class MelkanaHomeItem(HomeBaseItem, BaseItem):
         self.check_features(details['features'])
 
 
+class DivarCarItems(CarBaseItem, BaseItem):
+
+    def clean(self, data):
+        self['neighbourhood'] = data.get('widgets').get('header').get('place')
+        list_data = data['widgets']['list_data']
+        for i in list_data:
+            if i['title'] == 'برند':
+                if 'پراید 111' in i['value']:
+                    self['brand'] = 'پراید'
+                    self['model'] = '111'
+                elif 'پراید 131' in i['value']:
+                    self['brand'] = 'پراید'
+                    self['model'] = '131'
+                elif 'پراید 132' in i['value']:
+                    self['brand'] = 'پراید'
+                    self['model'] = '132'
+                elif 'پراید 141' in i['value']:
+                    self['brand'] = 'پراید'
+                    self['model'] = '141'
+                elif 'پراید اتوماتیک' in i['value']:
+                    self['brand'] = 'پراید'
+                    self['model'] = 'سایر مدل‌ها'
+                elif 'پراید سفری' in i['value']:
+                    self['brand'] = 'پراید'
+                    self['model'] = 'سایر مدل‌ها'
+                elif 'پراید صندوق‌دار' in i['value']:
+                    self['brand'] = 'پراید'
+                    self['model'] = 'صندوق‌دار'
+                elif 'پراید هاچبک' in i['value']:
+                    self['brand'] = 'پراید'
+                    self['model'] = 'هاچبک'
+                elif 'وانت پراید 151' in i['value']:
+                    self['brand'] = 'پراید'
+                    self['model'] = '151'
+                elif 'پراید' in i['value']:
+                    self['brand'] = 'پراید'
+                    self['model'] = 'سایر مدل‌ها'
+
+                elif 'تیبا صندوق‌دار' in i['value'] or 'تیبا ۱' in i['value']:
+                    self['brand'] = 'تیبا'
+                    self['model'] = 'صندوق دار'
+                elif 'تیبا هاچبک' in i['value'] or 'تیبا ۲' in i['value']:
+                    self['brand'] = 'تیبا'
+                    self['model'] = ' تیبا۲'
+                elif 'تیبا' in i['value']:
+                    self['brand'] = 'تیبا'
+                    self['model'] = '‌سایر مدل‌ها'
+
+                elif 'آریو اتوماتیک 1600cc' in i['value']:
+                    self['brand'] = 'آریو'
+                    self['model'] = 'آریو'
+                elif 'دنده‌ای 1500cc' in i['value']:
+                    self['brand'] = 'آریو'
+                    self['model'] = 'آریو'
+                elif 'دنده‌ای 1600cc' in i['value']:
+                    self['brand'] = 'آریو'
+                    self['model'] = 'آریو'
+                elif 'آریو' in i['value']:
+                    self['brand'] = 'آریو'
+                    self['model'] = 'آریو'
+
+                elif 'ساینا اتوماتیک' in i['value']:
+                    self['brand'] = 'ساینا'
+                    self['model'] = 'اتوماتیک'
+                elif 'ساینا دنده‌ای' in i['value']:
+                    self['brand'] = 'ساینا'
+                    self['model'] = 'دنده ای'
+                elif 'ساینا' in i['value']:
+                    self['brand'] = 'ساینا'
+                    self['model'] = 'سایر مدل‌ها'
+
+                elif 'ام‌وی‌ام 110' in i['value']:
+                    self['brand'] = 'ام وی ام'
+                    self['model'] = '110'
+                elif 'ام‌وی‌ام 110S' in i['value']:
+                    self['brand'] = 'ام وی ام'
+                    self['model'] = '110S'
+                elif 'ام‌وی‌ام 315 صندوق‌دار' in i['value']:
+                    self['brand'] = 'ام وی ام'
+                    self['model'] = '315 صندوق‌دار'
+                elif 'ام‌وی‌ام 315 هاچبک' in i['value']:
+                    self['brand'] = 'ام وی ام'
+                    self['model'] = '315 هاچبک'
+                elif 'ام‌وی‌ام 530' in i['value']:
+                    self['brand'] = 'ام وی ام'
+                    self['model'] = '530'
+                elif 'ام‌وی‌ام 550' in i['value']:
+                    self['brand'] = 'ام وی ام'
+                    self['model'] = '550'
+                elif 'ام‌وی‌ام X33' in i['value']:
+                    self['brand'] = 'ام وی ام'
+                    self['model'] = 'X33'
+                elif 'ام‌وی‌ام X22' in i['value']:
+                    self['brand'] = 'ام وی ام'
+                    self['model'] = 'X22'
+                elif 'ام‌وی‌ام X33 S' in i['value']:
+                    self['brand'] = 'ام وی ام'
+                    self['model'] = 'X33 S'
+                elif 'ام‌وی‌ام' in i['value']:
+                    self['brand'] = 'ام وی ام'
+                    self['model'] = '‌سایر مدل‌ها'
+
+                elif 'پژو 2008' in i['value']:
+                    self['brand'] = 'پژو'
+                    self['model'] = '2008'
+                elif 'پژو 205' in i['value']:
+                    self['brand'] = 'پژو'
+                    self['model'] = '205'
+                elif 'پژو 206' in i['value']:
+                    self['brand'] = 'پژو'
+                    self['model'] = '206'
+                elif 'پژو 206 SD' in i['value']:
+                    self['brand'] = 'پژو'
+                    self['model'] = '206 SD'
+                elif 'پژو 207i' in i['value']:
+                    self['brand'] = 'پژو'
+                    self['model'] = '207i'
+                elif 'پژو 207i SD' in i['value']:
+                    self['brand'] = 'پژو'
+                    self['model'] = '207i SD'
+                elif 'پژو 301' in i['value']:
+                    self['brand'] = 'پژو'
+                    self['model'] = '301'
+                elif 'پژو 404' in i['value']:
+                    self['brand'] = 'پژو'
+                    self['model'] = '404'
+                elif 'پژو 405' in i['value']:
+                    self['brand'] = 'پژو'
+                    self['model'] = '405'
+                elif 'پژو 406' in i['value']:
+                    self['brand'] = 'پژو'
+                    self['model'] = '406'
+                elif 'پژو 407' in i['value']:
+                    self['brand'] = 'پژو'
+                    self['model'] = '407'
+                elif 'پژو 504' in i['value']:
+                    self['brand'] = 'پژو'
+                    self['model'] = '504'
+                elif 'پژو 508' in i['value']:
+                    self['brand'] = 'پژو'
+                    self['model'] = '508'
+                elif 'پژو پارس' in i['value']:
+                    self['brand'] = 'پژو'
+                    self['model'] = 'پارس'
+                elif 'پژو پارس لیموزین' in i['value']:
+                    self['brand'] = 'پژو'
+                    self['model'] = 'پارس لیموزین'
+                elif 'پژو روآ' in i['value']:
+                    self['brand'] = 'پژو'
+                    self['model'] = 'روآ'
+                elif 'پژو روآ سال' in i['value']:
+                    self['brand'] = 'پژو'
+                    self['model'] = 'روآ'
+                elif 'پژو RD' in i['value']:
+                    self['brand'] = 'پژو'
+                    self['model'] = 'RD'
+                elif 'پژو RDI' in i['value']:
+                    self['brand'] = 'پژو'
+                    self['model'] = 'RDI'
+                elif 'پژو' in i['value']:
+                    self['brand'] = 'پژو'
+                    self['model'] = '‌سایر مدل‌ها'
+
+                elif 'پیکان بنزینی' in i['value'] or 'پیکان دوگانه‌ سوز CNG' in i['value'] or 'پیکان دوگانه‌ سوز LPG' in \
+                        i['value']:
+                    self['brand'] = 'پیکان'
+                    self['model'] = 'سواری'
+                elif 'پیکان وانت' in i['value']:
+                    self['brand'] = 'پیکان'
+                    self['model'] = 'وانت'
+                elif 'پیکان' in i['value']:
+                    self['brand'] = 'پیکان'
+                    self['model'] = '‌سایر مدل‌ها'
+
+                elif 'دنا پلاس' in i['value']:
+                    self['brand'] = 'دنا'
+                    self['model'] = 'پلاس'
+                elif 'دنا معمولی' in i['value']:
+                    self['brand'] = 'دنا'
+                    self['model'] = 'معمولی'
+                elif 'دنا' in i['value']:
+                    self['brand'] = 'دنا'
+                    self['model'] = '‌سایر مدل‌ها'
+
+                elif 'رانا EL' in i['value']:
+                    self['brand'] = 'رانا'
+                    self['model'] = 'رانا EL'
+                elif 'رانا LX' in i['value']:
+                    self['brand'] = 'رانا'
+                    self['model'] = 'رانا LX'
+                elif 'رانا' in i['value']:
+                    self['brand'] = 'رانا'
+                    self['model'] = 'رانا (‌سایر مدل‌ها)'
+
+                elif 'سمند سریر' in i['value']:
+                    self['brand'] = 'سمند'
+                    self['model'] = 'سریر'
+                elif 'سمند سورن' in i['value']:
+                    self['brand'] = 'سمند'
+                    self['model'] = 'سورن'
+                elif 'سمند EL' in i['value']:
+                    self['brand'] = 'سمند'
+                    self['model'] = 'EL'
+                elif 'سمند LX' in i['value']:
+                    self['brand'] = 'سمند'
+                    self['model'] = 'LX'
+                elif 'سمند SE' in i['value']:
+                    self['brand'] = 'سمند'
+                    self['model'] = 'SE'
+                elif 'سمند X7' in i['value']:
+                    self['brand'] = 'سمند'
+                    self['model'] = 'X7'
+                elif 'سمند' in i['value']:
+                    self['brand'] = 'سمند'
+                    self['model'] = '‌سایر مدل‌ها'
+
+                elif 'وانت آریسان آریسان' in i['value']:
+                    self['brand'] = 'آریسان'
+                    self['model'] = 'وانت'
+                elif 'وانت آریسان' in i['value']:
+                    self['brand'] = 'آریسان'
+                    self['model'] = 'وانت'
+
+                elif 'هایما S5' in i['value']:
+                    self['brand'] = 'هایما'
+                    self['model'] = 'هایما S5'
+                elif 'هایما S7' in i['value']:
+                    self['brand'] = 'هایما'
+                    self['model'] = 'هایما S7'
+                elif 'هایما' in i['value']:
+                    self['brand'] = 'هایما'
+                    self['model'] = '‌سایر مدل‌ها'
+
+                elif 'جک J3 سدان' in i['value']:
+                    self['brand'] = 'جک'
+                    self['model'] = 'J3 سدان'
+                elif 'جک J3 هاچبک' in i['value']:
+                    self['brand'] = 'جک'
+                    self['model'] = 'J3 هاچبک'
+                elif 'جک J4' in i['value']:
+                    self['brand'] = 'جک'
+                    self['model'] = 'J4'
+                elif 'جک J5' in i['value']:
+                    self['brand'] = 'جک'
+                    self['model'] = 'J5'
+                elif 'جک S3' in i['value']:
+                    self['brand'] = 'جک'
+                    self['model'] = 'S3'
+                elif 'جک S5' in i['value']:
+                    self['brand'] = 'جک'
+                    self['model'] = 'S5'
+                elif 'جک' in i['value']:
+                    self['brand'] = 'جک'
+                    self['model'] = '‌سایر مدل‌ها'
+
+                elif 'جیلی Emgrand 7' in i['value']:
+                    self['brand'] = 'جیلی'
+                    self['model'] = 'Emgrand 7'
+                elif 'جیلی Emgrand 7_RV' in i['value']:
+                    self['brand'] = 'جیلی'
+                    self['model'] = 'Emgrand 7_RV'
+                elif 'جیلی Emgrand X7' in i['value']:
+                    self['brand'] = 'جیلی'
+                    self['model'] = 'Emgrand X7'
+                elif 'جیلی GC6' in i['value']:
+                    self['brand'] = 'جیلی'
+                    self['model'] = 'GC6'
+                elif 'جیلی' in i['value']:
+                    self['brand'] = 'جیلی'
+                    self['model'] = '‌سایر مدل‌ها'
+
+                elif 'لیفان 520' in i['value']:
+                    self['brand'] = 'لیفان'
+                    self['model'] = 'لیفان 520'
+                elif 'لیفان 520i' in i['value']:
+                    self['brand'] = 'لیفان'
+                    self['model'] = 'لیفان 520i'
+                elif 'لیفان 620' in i['value']:
+                    self['brand'] = 'لیفان'
+                    self['model'] = 'لیفان 620'
+                elif 'لیفان 820' in i['value']:
+                    self['brand'] = 'لیفان'
+                    self['model'] = 'لیفان 820'
+                elif 'لیفان X50' in i['value']:
+                    self['brand'] = 'لیفان'
+                    self['model'] = 'لیفان X50'
+                elif 'لیفان X60' in i['value']:
+                    self['brand'] = 'لیفان'
+                    self['model'] = 'لیفان X60'
+                elif 'لیفان' in i['value']:
+                    self['brand'] = 'لیفان'
+                    self['model'] = 'سایر مدل‌ها'
+
+                elif 'رنو 21' in i['value']:
+                    self['brand'] = 'رنو'
+                    self['model'] = '21'
+                elif 'رنو 5' in i['value']:
+                    self['brand'] = 'رنو'
+                    self['model'] = '5'
+                elif 'رنو 5 مونتاژ' in i['value']:
+                    self['brand'] = 'رنو'
+                    self['model'] = '5 مونتاژ'
+                elif 'رنو اسکالا' in i['value']:
+                    self['brand'] = 'رنو'
+                    self['model'] = 'اسکالا'
+                elif 'رنو پارس تندر' in i['value']:
+                    self['brand'] = 'رنو'
+                    self['model'] = 'پارس تندر'
+                elif 'رنو پی کی' in i['value']:
+                    self['brand'] = 'رنو'
+                    self['model'] = 'پی کی'
+                elif 'رنو تلیسمان' in i['value']:
+                    self['brand'] = 'رنو'
+                    self['model'] = 'تلیسمان'
+                elif 'رنو تندر 90' in i['value']:
+                    self['brand'] = 'رنو'
+                    self['model'] = 'تندر 90'
+                elif 'رنو تندر 90 پلاس' in i['value']:
+                    self['brand'] = 'رنو'
+                    self['model'] = '  تندر 90 پلاس'
+                elif 'رنو داستر' in i['value']:
+                    self['brand'] = 'رنو'
+                    self['model'] = 'داستر'
+                elif 'رنو ساندرو' in i['value']:
+                    self['brand'] = 'رنو'
+                    self['model'] = 'ساندرو'
+                elif 'رنو ساندرو استپ‌وی' in i['value']:
+                    self['brand'] = 'رنو'
+                    self['model'] = 'ساندرو استپ وی'
+                elif 'رنو سپند' in i['value']:
+                    self['brand'] = 'رنو'
+                    self['model'] = 'سپند'
+                elif 'رنو سفران' in i['value']:
+                    self['brand'] = 'رنو'
+                    self['model'] = 'سفران'
+                elif 'رنو سیمبل' in i['value']:
+                    self['brand'] = 'رنو'
+                    self['model'] = 'سیمبل'
+                elif 'رنو فلوئنس' in i['value']:
+                    self['brand'] = 'رنو'
+                    self['model'] = 'فلوئنس'
+                elif 'رنو کپچر' in i['value']:
+                    self['brand'] = 'رنو'
+                    self['model'] = 'کپچر'
+                elif 'رنو کوليوس' in i['value']:
+                    self['brand'] = 'رنو'
+                    self['model'] = 'کوليوس'
+                elif 'رنو لاگونا' in i['value']:
+                    self['brand'] = 'رنو'
+                    self['model'] = 'لاگونا'
+                elif 'رنو لتیتود' in i['value']:
+                    self['brand'] = 'رنو'
+                    self['model'] = 'لتیتود'
+                elif 'رنو مگان' in i['value']:
+                    self['brand'] = 'رنو'
+                    self['model'] = 'مگان'
+                elif 'رنو مگان مونتاژ' in i['value']:
+                    self['brand'] = 'رنو'
+                    self['model'] = 'مگان مونتاژ'
+                elif 'وانت رنو وانت تندر 91' in i['value']:
+                    self['brand'] = 'رنو'
+                    self['model'] = 'وانت رنو وانت تندر 90'
+                elif 'رنو' in i['value']:
+                    self['brand'] = 'رنو'
+                    self['model'] = '‌سایر مدل‌ها'
+
+                elif 'برلیانس کراس' in i['value']:
+                    self['brand'] = 'برلیانس'
+                    self['model'] = 'کراس'
+                elif 'برلیانس H220' in i['value']:
+                    self['brand'] = 'برلیانس'
+                    self['model'] = 'H220'
+                elif 'برلیانس H230' in i['value']:
+                    self['brand'] = 'برلیانس'
+                    self['model'] = 'H230'
+                elif 'برلیانس H320' in i['value']:
+                    self['brand'] = 'برلیانس'
+                    self['model'] = 'H320'
+                elif 'برلیانس H330' in i['value']:
+                    self['brand'] = 'برلیانس'
+                    self['model'] = 'H330'
+                elif 'برلیانس V5' in i['value']:
+                    self['brand'] = 'برلیانس'
+                    self['model'] = 'V5'
+                elif 'برلیانس' in i['value']:
+                    self['brand'] = 'برلیانس'
+                    self['model'] = '‌سایر مدل‌ها'
+
+                elif 'هیوندای آزرا گرنجور' in i['value']:
+                    self['brand'] = 'هیوندای'
+                    self['model'] = 'آزرا گرنجور'
+                elif 'هیوندای آوانته' in i['value']:
+                    self['brand'] = 'هیوندای'
+                    self['model'] = 'آوانته'
+                elif 'هیوندای اسکوپ' in i['value']:
+                    self['brand'] = 'هیوندای'
+                    self['model'] = 'اسکوپ'
+                elif 'هیوندای اکسل' in i['value']:
+                    self['brand'] = 'هیوندای'
+                    self['model'] = 'اکسل'
+                elif 'هیوندای اکسنت' in i['value']:
+                    self['brand'] = 'هیوندای'
+                    self['model'] = 'اکسنت'
+                elif 'هیوندای اکسنت مونتاژ' in i['value']:
+                    self['brand'] = 'هیوندای'
+                    self['model'] = 'اکسنت مونتاژ'
+                elif 'هیوندای النترا' in i['value']:
+                    self['brand'] = 'هیوندای'
+                    self['model'] = 'النترا'
+                elif 'هیوندای النترا مونتاژ' in i['value']:
+                    self['brand'] = 'هیوندای'
+                    self['model'] = 'النترا مونتاژ'
+                elif 'هیوندای تراجت' in i['value']:
+                    self['brand'] = 'هیوندای'
+                    self['model'] = 'تراجت'
+                elif 'هیوندای توسان ix 35' in i['value']:
+                    self['brand'] = 'هیوندای'
+                    self['model'] = 'توسان ix 34'
+                elif 'هیوندای جنسیس سدان' in i['value']:
+                    self['brand'] = 'هیوندای'
+                    self['model'] = 'جنسیس سدان'
+                elif 'هیوندای جنسیس کوپه' in i['value']:
+                    self['brand'] = 'هیوندای'
+                    self['model'] = 'جنسیس کوپه'
+                elif 'هیوندای سانتافه ix 45' in i['value']:
+                    self['brand'] = 'هیوندای'
+                    self['model'] = 'سانتافه ix 44'
+                elif 'هیوندای سنتنیال' in i['value']:
+                    self['brand'] = 'هیوندای'
+                    self['model'] = 'سنتنیال'
+                elif 'هیوندای سوناتا LF' in i['value']:
+                    self['brand'] = 'هیوندای'
+                    self['model'] = 'سوناتا LF'
+                elif 'هیوندای سوناتا LF هیبرید' in i['value']:
+                    self['brand'] = 'هیوندای'
+                    self['model'] = 'سوناتا LF هیبرید'
+                elif 'هیوندای سوناتا NF' in i['value']:
+                    self['brand'] = 'هیوندای'
+                    self['model'] = '‌سایر مدل‌ها'
+                elif 'هیوندای سوناتا YF' in i['value']:
+                    self['brand'] = 'هیوندای'
+                    self['model'] = '‌سایر مدل‌ها'
+                elif 'هیوندای سوناتا YF' in i['value']:
+                    self['brand'] = 'هیوندای'
+                    self['model'] = '‌سایر مدل‌ها'
+                elif 'هیوندای وراکروز ix55' in i['value']:
+                    self['brand'] = 'هیوندای'
+                    self['model'] = 'وراکروز ix54‌'
+                elif 'هیوندای ورنا' in i['value']:
+                    self['brand'] = 'هیوندای'
+                    self['model'] = 'ورنا'
+                elif 'هیوندای ولستر' in i['value']:
+                    self['brand'] = 'هیوندای'
+                    self['model'] = 'ولستر'
+                elif 'هیوندای FX کوپه' in i['value']:
+                    self['brand'] = 'هیوندای'
+                    self['model'] = 'FX کوپه'
+                elif 'هیوندای i10 مونتاژ' in i['value']:
+                    self['brand'] = 'هیوندای'
+                    self['model'] = 'i10 مونتاژ'
+                elif 'هیوندای i20' in i['value']:
+                    self['brand'] = 'هیوندای'
+                    self['model'] = 'i20'
+                elif 'هیوندای i30' in i['value']:
+                    self['brand'] = 'هیوندای'
+                    self['model'] = 'i30'
+                elif 'هیوندای i40' in i['value']:
+                    self['brand'] = 'هیوندای'
+                    self['model'] = 'i40'
+                elif 'هیوندای i40 استیشن' in i['value']:
+                    self['brand'] = 'هیوندای'
+                    self['model'] = 'i40 استیشن'
+                elif 'هیوندای' in i['value']:
+                    self['brand'] = 'هیوندای'
+                    self['model'] = '‌سایر مدل‌ها'
+
+                elif 'کیا اپتیما' in i['value']:
+                    self['brand'] = 'کیا'
+                    self['model'] = 'اپتیما'
+                elif 'کیا اپیروس' in i['value']:
+                    self['brand'] = 'کیا'
+                    self['model'] = 'اپیروس'
+                elif 'کیا اسپورتیج' in i['value']:
+                    self['brand'] = 'کیا'
+                    self['model'] = 'اسپورتیج'
+                elif 'کیا پیکانتو' in i['value']:
+                    self['brand'] = 'کیا'
+                    self['model'] = 'پیکانتو'
+                elif 'کیا ریو' in i['value']:
+                    self['brand'] = 'کیا'
+                    self['model'] = 'ریو'
+                elif 'کیا ریو مونتاژ' in i['value']:
+                    self['brand'] = 'کیا'
+                    self['model'] = 'ریو مونتاژ'
+                elif 'کیا سراتو' in i['value']:
+                    self['brand'] = 'کیا'
+                    self['model'] = 'سراتو'
+                elif 'کیا سراتو کوپه' in i['value']:
+                    self['brand'] = 'کیا'
+                    self['model'] = 'سراتو کوپه'
+                elif 'کیا سراتو مونتاژ' in i['value']:
+                    self['brand'] = 'کیا'
+                    self['model'] = 'سراتو مونتاژ'
+                elif 'کیا سورنتو' in i['value']:
+                    self['brand'] = 'کیا'
+                    self['model'] = 'سورنتو'
+                elif 'کیا سول' in i['value']:
+                    self['brand'] = 'کیا'
+                    self['model'] = 'سول'
+                elif 'کیا کادنزا' in i['value']:
+                    self['brand'] = 'کیا'
+                    self['model'] = 'کادنزا'
+                elif 'کیا کارناوال' in i['value']:
+                    self['brand'] = 'کیا'
+                    self['model'] = 'کارناوال'
+                elif 'کیا کارنز' in i['value']:
+                    self['brand'] = 'کیا'
+                    self['model'] = 'کارنز'
+                elif 'کیا موهاوی' in i['value']:
+                    self['brand'] = 'کیا'
+                    self['model'] = 'موهاوی'
+                elif 'کیا' in i['value']:
+                    self['brand'] = 'کیا'
+                    self['model'] = '‌سایر مدل‌ها'
+            elif i['title'] == 'کارکرد':
+                try:
+                    self['consumption'] = int(i['value'].replace('٫', '').strip())
+                except:
+                    self['consumption'] = -1
+            elif i['title'] == 'سال ساخت':
+                try:
+                    self['production'] = int(i['value'][-4:])
+                except:
+                    self['production'] = -1
+            elif i['title'] == 'رنگ':
+                self['color'] = i['value']
+            elif i['title'] == 'قیمت':
+                try:
+                    self['price'] = int(i['value'].replace('تومان', '').strip().replace('٫', ''))
+                except:
+                    self['price'] = -1
+            elif i['title'] == 'نوع آگهی':
+                pass
+            elif i['title'] == 'مایلم معاوضه کنم':
+                self['swap'] = True if i['value'] == 'هستم' else False
+            elif i['title'] == 'گیربکس':
+                self['gear_box'] = i['value']
+            elif i['title'] == 'وضعیت بدنه':
+                self['body_condition'] = i['value']
+
+        self['time'] = int(datetime.datetime.now().timestamp())
+        self['title'] = data['data']['share']['title']
+        self['description'] = data['widgets']['description']
+        self['token'] = hash_token(data['token'])
+        self['source_id'] = 1
+        self['url'] = data['data']['url']
+        self['thumbnail'] = data['data']['seo'].get('thumbnail', 'not_defined')
+        if self['thumbnail'] is not None and isinstance(self['thumbnail'], list):
+            self['thumbnail'] = self['thumbnail'][0] if 'http' in self['thumbnail'][0] else 'not_defined'
+        self['latitude'] = float(data['widgets']['location'].get('latitude', -1))
+        self['longitude'] = float(data['widgets']['location'].get('longitude', -1))
+        subcategory = data['data']['category']['title']
+        if subcategory == 'سنگین':
+            self['sub_category'] = 'سنگین و نیمه سنگین'
+            self['category'] = 'خودرو'
+        elif subcategory == 'خودرو':
+            self['sub_category'] = 'وسایل نقلیه'
+            self['category'] = 'خودرو'
+        elif subcategory == 'سواری' or subcategory == 'اجاره‌ای' or subcategory == 'کلاسیک':
+            self['category'] = 'خودرو'
+            self['sub_category'] = subcategory
+        elif subcategory == 'قطعات یدکی و لوازم جانبی خودرو':
+            self['category'] = 'قطعات یدکی و لوازم جانبی وسایل نقلیه'
+        elif subcategory == 'موتورسیکلت و لوازم جانبی':
+            self['category'] = 'موتورسیکلت و لوازم جانبی'
+        elif subcategory == 'قایق و لوازم جانبی':
+            self['category'] = 'قایق و لوازم جانبی'
+        elif subcategory == 'وسایل نقلیه':
+            self['category'] = 'سایر وسایل نقلیه'
+
+
+class DivarHomeItems(HomeBaseItem, BaseItem):
+
+    def clean(self, data):
+
+        for i in data['widgets']['list_data']:
+            if i['title'] == 'دسته‌بندی':
+                subcat = i['value']
+                if subcat == 'اجاره مسکونی (آپارتمان، خانه، زمین)':
+                    self['category'] = 'اجاره مسکونی'
+                    self['sub_category'] = 'سایر املاک'
+                elif subcat == 'فروش مسکونی (آپارتمان، خانه، زمین)':
+                    self['category'] = 'فروش مسکونی'
+                    self['sub_category'] = 'سایر املاک'
+                elif subcat == 'فروش اداری و تجاری (مغازه، دفتر کار، صنعتی)':
+                    self['category'] = 'فروش اداری و تجاری'
+                    self['sub_category'] = 'سایر املاک'
+                elif subcat == 'اجاره اداری و تجاری (مغازه، دفتر کار، صنعتی)':
+                    self['category'] = 'اجاره اداری و تجاری'
+                    self['sub_category'] = 'سایر املاک'
+                elif subcat == 'خدمات املاک':
+                    self['category'] = 'خدمات املاک'
+                    self['sub_category'] = 'سایر املاک'
+                elif subcat == 'زمین و کلنگی':
+                    self['sub_category'] = 'مسکونی'
+                    self['category'] = 'زمین، کلنگی و باغ'
+                else:
+                    self['sub_category'] = subcat
+            elif i['title'] == 'سال ساخت':
+                try:
+                    self['production'] = int(i['value'])
+                except:
+                    data['production'] = -1
+            elif i['title'] == 'تعداد اتاق':
+                self['room'] = clean_number(i['value'])
+            elif i['title'] == 'متراژ':
+                try:
+                    self['area'] = int(i['value'].split(' ')[0])
+                except:
+                    self['area'] = -1
+            elif 'قیمت' in i['title']:
+                try:
+                    self['price'] = int(i['value'].replace('تومان', '').strip().replace('٫', ''))
+                except:
+                    self['price'] = -1
+            elif i['title'] == 'ودیعه':
+                try:
+                    self['deposit'] = int(i['value'].replace('تومان', '').strip().replace('٫', ''))
+                except Exception as e:
+                    self['deposit'] = 0
+            elif i['title'] == 'اجاره':
+                try:
+                    self['rent'] = int(i['value'].replace('تومان', '').strip().replace('٫', ''))
+                except:
+                    if ['value'] == 'مجانی':
+                        self['rent'] = 0
+                    elif ['value'] == 'توافقی':
+                        self['rent'] = -1
+            elif i['title'] == 'نوع آگهی':
+                adtype = i['value']
+                if adtype == 'ارائه':
+                    pass
+                elif adtype == 'فروشی':
+                    pass
+            elif i['title'] == 'آگهی‌دهنده':
+                self['advertiser'] = i['value']
+            elif i['title'] == 'سند اداری':
+                self['administrative_document'] = False if i['value'] == 'نیست' else True
+            elif i['title'] == 'مایلم معاوضه کنم':
+                self['swap'] = True if i['value'] == 'هستم' else False
+
+        self['time'] = int(datetime.datetime.now().timestamp())
+        self['title'] = data['data']['share']['title']
+        self['description'] = data['widgets']['description']
+        self['token'] = hash_token(data['token'])
+        self['source_id'] = 1
+        self['url'] = data['data']['url']
+        self['thumbnail'] = data['data']['seo'].get('thumbnail', 'not_defined')
+        if self['thumbnail'] is not None and isinstance(self['thumbnail'], list):
+            self['thumbnail'] = self['thumbnail'][0] if 'http' in self['thumbnail'][0] else 'not_defined'
+        self['latitude'] = float(data['widgets']['location'].get('latitude', -1))
+        self['longitude'] = float(data['widgets']['location'].get('longitude', -1))
+        self['neighbourhood'] = data['widgets']['header']['place']
+        category = data['data']['category']['slug']
+        if category == 'apartment-rent' or category == 'house-villa-rent':
+            self['category'] = 'اجاره مسکونی'
+        elif category == 'house-villa-sell' or category == 'apartment-sell':
+            self['category'] = 'فروش مسکونی'
+        elif category == 'industry-agriculture-business-sell':
+            self['category'] = 'فروش اداری و تجاری'
+        elif category == 'shop-sell':
+            self['category'] = 'فروش اداری و تجاری'
+        elif category == 'office-sell':
+            self['category'] = 'فروش اداری و تجاری'
+        elif category == 'industry-agriculture-business-rent':
+            self['category'] = 'اجاره اداری و تجاری'
+        elif category == 'shop-rent':
+            self['category'] = 'اجاره اداری و تجاری'
+        elif category == 'office-rent':
+            self['category'] = 'اجاره اداری و تجاری'
+        elif category == 'agency':
+            self['category'] = 'خدمات املاک'
+        elif category == 'partnership':
+            self['category'] = 'خدمات املاک'
+        elif category == 'financial-legal':
+            self['category'] = 'خدمات املاک'
+        elif category == 'presell':
+            self['category'] = 'خدمات املاک'
+        elif category == 'املاک':
+            self['category'] = 'سایر املاک'
+            self['sub_category'] = 'سایر املاک'
+
+
 def clean_number(data, int_type=True):
     clean_data = "-1"
     for c in str(data):
@@ -587,3 +1280,8 @@ def clean_number(data, int_type=True):
     if int_type:
         return int(clean_data)
     return clean_data
+
+
+def hash_token(token):
+    import hashlib
+    return int(str(int(hashlib.sha1(str(token).encode()).hexdigest(), 16))[:18])

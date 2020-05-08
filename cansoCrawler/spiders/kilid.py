@@ -5,6 +5,8 @@ import scrapy
 
 from cansoCrawler.items import KilidHomeItem
 
+from cansoCrawler.models.utilities import get_province
+
 
 class KilidSpider(scrapy.Spider):
     name = 'kilid'
@@ -44,6 +46,7 @@ class KilidSpider(scrapy.Spider):
         item['deal_type'] = deal_type
         item['url'] = response.request.url
         item.extract(ad)
+        item['province'] = get_province(item['city'])
         return item
 
     home_type_dict = {

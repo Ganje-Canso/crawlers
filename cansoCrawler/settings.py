@@ -91,4 +91,4 @@ ITEM_PIPELINES = {
 
 # LOG
 LOG_FILE = 'spider.log'
-LOG_LEVEL = 'ERROR'
+LOG_LEVEL = 'INFO'

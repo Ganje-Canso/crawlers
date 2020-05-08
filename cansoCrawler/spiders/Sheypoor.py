@@ -9,7 +9,7 @@ class SheypoorSpider(scrapy.Spider):
     allowed_domains = ['sheypoor.com']
     start_urls = ['https://sheypoor.com/']
     category = ''
-    _pages = 2
+    _pages = 5
 
     def __init__(self, category='none', **kwargs):
         self.category = category
