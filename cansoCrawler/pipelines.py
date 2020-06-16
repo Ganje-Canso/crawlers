@@ -30,7 +30,80 @@ class CansocrawlerPipeline(object):
     def save_home_data(self, item):
         try:
             self.cursor.execute(
-                f"call save_home_data({item['token']}, {item['source_id']}, {item['time']}, '{item['title']}' ,'{item['category']}' ,'{item['sub_category']}' ,'{item['province']}' ,'{item['city']}' , '{item['neighbourhood']}' ,'{item['advertiser']}' ,{item['production']} , {item['room']}, {item['area']}, {item['price']} , {item['deposit']}, {item['rent']}, '{item['description']}', '{item['url']}', '{item['thumbnail']}', {item['latitude']}, {item['longitude']}, '{item['tell']}', {item['swap']}, {item['administrative_document']}, {item['parking']}, {item['elevator']}, {item['storeroom']}, {item['swap_deposit_rent']}, {item['balcony']}, {item['estate_floor']}, '{item['estate_direction']}', {item['package']}, '{item['kitchen']}', {item['cooler']}, '{item['floor_covering']}')")
+                "insert into home (" +
+                (("token," if self.insertThis(item["token"]) else "") +
+                 ("source_id," if self.insertThis(item["source_id"]) else "") +
+                 ("time," if self.insertThis(item["time"]) else "") +
+                 ("title," if self.insertThis(item["title"]) else "") +
+                 ("category," if self.insertThis(item["category"]) else "") +
+                 ("sub_category," if self.insertThis(item["sub_category"]) else "") +
+                 ("province," if self.insertThis(item["province"]) else "") +
+                 ("city," if self.insertThis(item["city"]) else "") +
+                 ("neighbourhood," if self.insertThis(item["neighbourhood"]) else "") +
+                 ("advertiser," if self.insertThis(item["advertiser"]) else "") +
+                 ("production," if self.insertThis(item["production"]) else "") +
+                 ("room," if self.insertThis(item["room"]) else "") +
+                 ("area," if self.insertThis(item["area"]) else "") +
+                 ("price," if self.insertThis(item["price"]) else "") +
+                 ("deposit," if self.insertThis(item["deposit"]) else "") +
+                 ("rent," if self.insertThis(item["rent"]) else "") +
+                 ("description," if self.insertThis(item["description"]) else "") +
+                 ("url," if self.insertThis(item["url"]) else "") +
+                 ("thumbnail," if self.insertThis(item["thumbnail"]) else "") +
+                 ("latitude," if self.insertThis(item["latitude"]) else "") +
+                 ("longitude," if self.insertThis(item["longitude"]) else "") +
+                 ("tell," if self.insertThis(item["tell"]) else "") +
+                 ("swap," if self.insertThis(item["swap"]) else "") +
+                 ("administrative_document," if self.insertThis(item["administrative_document"]) else "") +
+                 ("parking," if self.insertThis(item["parking"]) else "") +
+                 ("elevator," if self.insertThis(item["elevator"]) else "") +
+                 ("storeroom," if self.insertThis(item["storeroom"]) else "") +
+                 ("swap_deposit_rent," if self.insertThis(item["swap_deposit_rent"]) else "") +
+                 ("balcony," if self.insertThis(item["balcony"]) else "") +
+                 ("estate_floor," if self.insertThis(item["estate_floor"]) else "") +
+                 ("estate_direction," if self.insertThis(item["estate_direction"]) else "") +
+                 ("package," if self.insertThis(item["package"]) else "") +
+                 ("kitchen," if self.insertThis(item["kitchen"]) else "") +
+                 ("cooler," if self.insertThis(item["cooler"]) else "")).strip(',') +
+                (",floor_covering" if self.insertThis(item["floor_covering"]) else "") +
+                ") " +
+                "values (" +
+                ((f"{item['token']}," if self.insertThis(item["token"]) else "") +
+                 (f"{item['source_id']}," if self.insertThis(item["source_id"]) else "") +
+                 (f"{item['time']}," if self.insertThis(item["time"]) else "") +
+                 (f"'{item['title']}'," if self.insertThis(item["title"]) else "") +
+                 (f"'{item['category']}'," if self.insertThis(item["category"]) else "") +
+                 (f"'{item['sub_category']}'," if self.insertThis(item["sub_category"]) else "") +
+                 (f"'{item['province']}'," if self.insertThis(item["province"]) else "") +
+                 (f"'{item['city']}'," if self.insertThis(item["city"]) else "") +
+                 (f"'{item['neighbourhood']}'," if self.insertThis(item["neighbourhood"]) else "") +
+                 (f"'{item['advertiser']}'," if self.insertThis(item["advertiser"]) else "") +
+                 (f"{item['production']}," if self.insertThis(item["production"]) else "") +
+                 (f"{item['room']}," if self.insertThis(item["room"]) else "") +
+                 (f"{item['area']}," if self.insertThis(item["area"]) else "") +
+                 (f"{item['price']} ," if self.insertThis(item["price"]) else "") +
+                 (f"{item['deposit']}," if self.insertThis(item["deposit"]) else "") +
+                 (f"{item['rent']}," if self.insertThis(item["rent"]) else "") +
+                 (f"'{item['description']}'," if self.insertThis(item["description"]) else "") +
+                 (f"'{item['url']}'," if self.insertThis(item["url"]) else "") +
+                 (f"'{item['thumbnail']}'," if self.insertThis(item["thumbnail"]) else "") +
+                 (f"{item['latitude']}," if self.insertThis(item["latitude"]) else "") +
+                 (f"{item['longitude']}," if self.insertThis(item["longitude"]) else "") +
+                 (f"'{item['tell']}'," if self.insertThis(item["tell"]) else "") +
+                 (f"{item['swap']}," if self.insertThis(item["swap"]) else "") +
+                 (f"{item['administrative_document']}," if self.insertThis(item["administrative_document"]) else "") +
+                 (f"{item['parking']}," if self.insertThis(item["parking"]) else "") +
+                 (f"{item['elevator']}," if self.insertThis(item["elevator"]) else "") +
+                 (f"{item['storeroom']}," if self.insertThis(item["storeroom"]) else "") +
+                 (f"{item['swap_deposit_rent']}," if self.insertThis(item["swap_deposit_rent"]) else "") +
+                 (f"{item['balcony']}," if self.insertThis(item["balcony"]) else "") +
+                 (f"{item['estate_floor']}," if self.insertThis(item["estate_floor"]) else "") +
+                 (f"'{item['estate_direction']}'," if self.insertThis(item["estate_direction"]) else "") +
+                 (f"{item['package']}," if self.insertThis(item["package"]) else "") +
+                 (f"'{item['kitchen']}'," if self.insertThis(item["kitchen"]) else "") +
+                 (f"{item['cooler']}," if self.insertThis(item["cooler"]) else "")).strip(',') +
+                (f",'{item['floor_covering']}'" if self.insertThis(item["floor_covering"]) else "") +
+                " )")
             self.conn.commit()
         except:
             self.conn.rollback()
@@ -98,7 +171,7 @@ class CansocrawlerPipeline(object):
                  (f"'{item['model']}'," if self.insertThis(item["model"]) else "") +
                  (f"'{item['body_condition']}'," if self.insertThis(item["body_condition"]) else "")).strip(',') +
                 (f",'{item['fuel']}'" if self.insertThis(item["fuel"]) else "") +
-                ")")
+                " )")
             self.conn.commit()
         except:
             self.conn.rollback()
