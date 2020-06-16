@@ -130,7 +130,7 @@ class SheypoorBaseItem(BaseItem):
         except:
             self['token'] = -1
         self['source_id'] = 2
-        self['time'] = int(datetime.datetime.now().timestamp())
+        self['time'] = get_time_stamp()
         self['title'] = response.css('section#item-details').xpath(
             './div[1]/h1[1]/text()').get(default="not-defined").strip()
         nav = response.css('nav#breadcrumbs ul').xpath('./li')
@@ -330,7 +330,7 @@ class BamaCarItem(CarBaseItem, BaseItem):
         description = response.css('div.addetaildesc').xpath('./span/text()').get(default="not_defined").strip()
         self['description'] = description
         self['source_id'] = 3
-        self['time'] = int(datetime.datetime.now().timestamp())
+        self['time'] = get_time_stamp()
         title = self.create_subject(info_right.xpath('./div[1]/div[1]/h1[1]/span/text()').getall())
         self['title'] = title
         brand = response.css('div.breadcrumb-div-section ol').xpath('./li[3]/a/span/text()').get(
@@ -439,7 +439,7 @@ class KilidHomeItem(HomeBaseItem, BaseItem):
     def extract(self, data_dict):
         self['token'] = hash_token(data_dict['listingId'] or "-1")
         self['source_id'] = 4
-        self['time'] = int(data_dict['listingDate'] / 1000 or datetime.datetime.now().timestamp())
+        self['time'] = get_time_stamp()
         self['title'] = data_dict['title'] or "not_defined"
         self['city'] = data_dict['city'] or "not_defined"
         self['neighbourhood'] = data_dict['neighbourhood'] or "not_defined"
@@ -520,7 +520,7 @@ class IhomeHomeItem(HomeBaseItem, BaseItem):
     def extract(self, dict_data):
         self['token'] = hash_token(dict_data['id'])
         self['source_id'] = 5
-        self['time'] = int(datetime.datetime.strptime(dict_data['published_at'], '%Y-%m-%d %H:%M:%S').timestamp())
+        self['time'] = get_time_stamp()
         self['title'] = dict_data['title']
         self['advertiser'] = dict_data['agency'].get('name', "not_defined")
         self['area'] = dict_data['area'] or -1
@@ -553,7 +553,7 @@ class MelkanaHomeItem(HomeBaseItem, BaseItem):
         details = dict_data['details']
         self['token'] = hash_token(details['code'])
         self['source_id'] = 6
-        self['time'] = int(datetime.datetime.now().timestamp())
+        self['time'] = get_time_stamp()
         self['title'] = details['title'] or 'not_defined'
         self['province'] = 'تهران'
         self['city'] = 'تهران'
@@ -1127,7 +1127,7 @@ class DivarCarItems(CarBaseItem, BaseItem):
             elif i['title'] == 'وضعیت بدنه':
                 self['body_condition'] = i['value']
 
-        self['time'] = int(datetime.datetime.now().timestamp())
+        self['time'] = get_time_stamp()
         self['title'] = data['data']['share']['title']
         self['description'] = data['widgets']['description']
         self['token'] = hash_token(data['token'])
@@ -1228,7 +1228,7 @@ class DivarHomeItems(HomeBaseItem, BaseItem):
             elif i['title'] == 'مایلم معاوضه کنم':
                 self['swap'] = True if i['value'] == 'هستم' else False
 
-        self['time'] = int(datetime.datetime.now().timestamp())
+        self['time'] = get_time_stamp()
         self['title'] = data['data']['share']['title']
         self['description'] = data['widgets']['description']
         self['token'] = hash_token(data['token'])
@@ -1285,3 +1285,7 @@ def clean_number(data, int_type=True):
 def hash_token(token):
     import hashlib
     return int(str(int(hashlib.sha1(str(token).encode()).hexdigest(), 16))[:18])
+
+
+def get_time_stamp():
+    return int(datetime.datetime.now().timestamp())
