@@ -438,6 +438,7 @@ class KilidHomeItem(HomeBaseItem, BaseItem):
 
     def extract(self, data_dict):
         self['token'] = hash_token(data_dict['listingId'] or "-1")
+        self['url'] = f"https://kilid.com/{self['deal_type']}/detail/{data_dict['listingId']}"
         self['source_id'] = 4
         self['time'] = get_time_stamp()
         self['title'] = data_dict['title'] or "not_defined"
@@ -518,7 +519,8 @@ class IhomeHomeItem(HomeBaseItem, BaseItem):
                 other_dict['floor_covering '] = self.get_floor_cover(other_dict['values'])
 
     def extract(self, dict_data):
-        self['token'] = hash_token(dict_data['id'])
+        self['token'] = hash_token(dict_data['code'])
+        self['url'] = f"https://ihome.ir/details-page/{dict_data['code']}"
         self['source_id'] = 5
         self['time'] = get_time_stamp()
         self['title'] = dict_data['title']

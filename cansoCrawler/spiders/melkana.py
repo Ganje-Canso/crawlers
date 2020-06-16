@@ -56,7 +56,6 @@ class MelkanaSpider(scrapy.Spider):
         if dict_data['status'] != 'success':
             pass
         item = MelkanaHomeItem()
-        item['url'] = response.request.url
         item['neighbourhood'] = neigh
         item['category'] = ('فروش ' if deal_type == 0 else "اجاره ") + estate_document
         if 'تجاری' in estate_document:

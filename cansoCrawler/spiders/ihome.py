@@ -55,7 +55,6 @@ class IhomeSpider(scrapy.Spider):
             item["neighbourhood"] = neigh
             item["category"] = ('فروش ' if is_sale == 1 else "اجاره ") + category
             item["sub_category"] = sub_category
-            item["url"] = response.request.url
             item.extract(ad)
             item['province'] = get_province(item['city'])
             return item

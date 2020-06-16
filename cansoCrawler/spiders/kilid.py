@@ -44,7 +44,6 @@ class KilidSpider(scrapy.Spider):
         ad = json.loads(response.body.decode('UTF-8'))
         item = KilidHomeItem()
         item['deal_type'] = deal_type
-        item['url'] = response.request.url
         item.extract(ad)
         item['province'] = get_province(item['city'])
         return item
