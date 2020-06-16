@@ -102,7 +102,7 @@ class DivarSpider(scrapy.Spider):
         categories = []  # [name(English)]
         cities = []  # [href, name(Persian), id]
 
-        script = response.xpath("//script")[7].extract()
+        script = response.css('body').xpath("./script")[0].extract()
         script = script[script.find('window.__PRELOADED_STATE__ = "{') + 30:script.find('window.env') - 5]
         script = script.replace('\\', '')
         try:
