@@ -554,6 +554,7 @@ class MelkanaHomeItem(HomeBaseItem, BaseItem):
     def extract(self, dict_data):
         details = dict_data['details']
         self['token'] = hash_token(details['code'])
+        self['url'] = f"https://www.melkana.com/estate/detail/{details['code']}"
         self['source_id'] = 6
         self['time'] = get_time_stamp()
         self['title'] = details['title'] or 'not_defined'
