@@ -242,6 +242,7 @@ class SheypoorHomeItem(HomeBaseItem, SheypoorBaseItem):
                 self.clean_sub_category(value)
             elif 'نوع ملک' in key:
                 self.clean_sub_category(value)
+        self.clean_sub_category(self['sub_category'])
 
 
 class SheypoorCarItem(CarBaseItem, SheypoorBaseItem):
