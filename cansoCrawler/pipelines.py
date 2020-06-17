@@ -5,8 +5,9 @@
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 import json
-
+from scrapy.utils.log import logger
 import psycopg2 as psycopg2
+from cansoCrawler.utilities.Normalize import remove_extra_character_and_normalize
 
 
 class CansocrawlerPipeline(object):
@@ -22,10 +23,15 @@ class CansocrawlerPipeline(object):
 
     def process_item(self, item, spider):
         item_base_name = item.__class__.__base__.__name__.lower()
+        item['category'] = remove_extra_character_and_normalize(item['category'])
+        item['sub_category'] = remove_extra_character_and_normalize(item['sub_category'])
+
         if 'home' in item_base_name:
-            self.save_home_data(item)
+            if self.not_exist(item['token'], 'home'):
+                self.save_home_data(item)
         elif 'car' in item_base_name:
-            self.save_car_data(item)
+            if self.not_exist(item['token'], 'car'):
+                self.save_car_data(item)
 
     def save_home_data(self, item):
         try:
@@ -177,5 +183,16 @@ class CansocrawlerPipeline(object):
             self.conn.rollback()
         return item
 
+    def not_exist(self, token, type):
+        try:
+            self.cursor.execute(f"select count(token) from {type} where token = {token}")
+            data = self.cursor.fetchall()
+            if int(data[0][0]) > 0:
+                return False
+        except Exception as e:
+            self.conn.rollback()
+            logger.critical(f"pipeline => not_exist: {e}")
+        return True
+
     def insertThis(self, v):
-        return str(v) != '-1' and v != 'not_defined'
+        return str(v) != '-1' and v != 'not_defined' and v != 'notdefined' and v != '-1.0'

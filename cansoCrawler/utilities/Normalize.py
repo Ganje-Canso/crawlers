@@ -56,3 +56,38 @@ def normalize_category(source, category, title):
     cur.close()
     db.close()
     return new_category
+
+
+def remove_extra_character_and_normalize(text, listing=False):
+    text = normalize_text(text)
+    text = text.replace("(", "")
+    text = text.replace(")", "")
+    text = text.replace("-", "")
+    text = text.replace("_", "")
+    text = text.replace(",", "")
+    text = text.replace("،", "")
+    text = text.replace("*", "")
+    text = text.replace("/", "")
+    text = text.replace(".", "")
+    text = text.replace("#", "")
+    text = text.replace("%", "")
+    text = text.replace("$", "")
+    text = text.replace("=", "")
+    text = text.replace("+", "")
+    text = text.replace("\\", "")
+    text = text.replace("<", "")
+    text = text.replace(">", "")
+    text = text.replace("|", "")
+    text = text.replace("[", "")
+    text = text.replace("]", "")
+    text = text.replace("{", "")
+    text = text.replace("}", "")
+    if listing:
+        return [t.strip() for t in text.split()]
+    return " ".join([t.strip() for t in text.split()])
+
+
+def normalize_and_compare(c1, c2):
+    c1 = normalize_text(c1)
+    c2 = normalize_text(c2)
+    return c1 == c2
