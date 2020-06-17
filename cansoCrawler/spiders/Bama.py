@@ -30,7 +30,7 @@ class BamaSpider(scrapy.Spider):
         # get next page
         if page <= self._pages:
             yield response.follow(base_url + "{}".format(page), callback=self.parse,
-                                  cb_kwargs={"page": page + 1})
+                                  cb_kwargs={"page": page + 1, "category": category, "base_url": base_url})
 
     def get_ad_links(self, response, category):
         if category == "motorcycle":
