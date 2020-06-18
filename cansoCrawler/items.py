@@ -315,8 +315,8 @@ class BamaCarItem(CarBaseItem, BaseItem):
         subject = ""
         for subject_section in sections:
             if not subject_section == sections[-1]:
-                subject += subject_section.strip()
-        return subject
+                subject += subject_section.strip() + " "
+        return subject.strip()
 
     def extract(self, response):
         if self['category'] == 'car':
@@ -624,7 +624,7 @@ class DivarCarItems(CarBaseItem, BaseItem):
                     self['model'] = 'صندوق دار'
                 elif 'تیبا هاچبک' in i['value'] or 'تیبا ۲' in i['value']:
                     self['brand'] = 'تیبا'
-                    self['model'] = ' تیبا۲'
+                    self['model'] = 'هاچ بک'
                 elif 'تیبا' in i['value']:
                     self['brand'] = 'تیبا'
                     self['model'] = '‌سایر مدل‌ها'
