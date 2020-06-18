@@ -132,15 +132,15 @@ class SheypoorBaseItem(BaseItem):
         self['source_id'] = 2
         self['time'] = get_time_stamp()
         self['title'] = response.css('section#item-details').xpath(
-            './div[1]/h1[1]/text()').get(default="not-defined").strip()
+            './div[1]/h1[1]/text()').get(default="not_defined").strip()
         nav = response.css('nav#breadcrumbs ul').xpath('./li')
-        self['province'] = nav[1].xpath('./a/text()').get(default="not-defined").strip()
-        self['city'] = nav[2].xpath('./a/text()').get(default="not-defined").strip()
+        self['province'] = nav[1].xpath('./a/text()').get(default="not_defined").strip()
+        self['city'] = nav[2].xpath('./a/text()').get(default="not_defined").strip()
         if len(nav) >= 6:
-            self['neighbourhood'] = nav[3].xpath('./a/text()').get(default="not-defined").strip()
+            self['neighbourhood'] = nav[3].xpath('./a/text()').get(default="not_defined").strip()
         self['description'] = response.css('section#item-details p.description::text').get(
-            default="not-defined").strip()
-        self['thumbnail'] = response.css('div#item-images img::attr(src)').get(default="not-defined")
+            default="not_defined").strip()
+        self['thumbnail'] = response.css('div#item-images img::attr(src)').get(default="not_defined")
         price = response.css('section#item-details span.item-price > strong::text').get(
             default="").strip()
         self['price'] = clean_number(price)
@@ -279,7 +279,7 @@ class SheypoorCarItem(CarBaseItem, SheypoorBaseItem):
     def extract(self, response):
         SheypoorBaseItem.extract(self, response)
         nav = response.css('nav#breadcrumbs ul').xpath('./li')
-        brand = nav[len(nav) - 1].xpath('./a/text()').get(default="not-defined").strip()
+        brand = nav[len(nav) - 1].xpath('./a/text()').get(default="not_defined").strip()
         if self['category'] not in brand:
             self['brand'] = brand
         self.clean_category()
