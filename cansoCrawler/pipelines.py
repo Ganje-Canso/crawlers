@@ -7,7 +7,7 @@
 import json
 from scrapy.utils.log import logger
 import psycopg2 as psycopg2
-from cansoCrawler.utilities.Normalize import remove_extra_character_and_normalize
+from cansoCrawler.utilities.Normalize import normalize_item
 
 
 class CansocrawlerPipeline(object):
@@ -23,14 +23,16 @@ class CansocrawlerPipeline(object):
 
     def process_item(self, item, spider):
         item_base_name = item.__class__.__base__.__name__.lower()
-        item['category'] = remove_extra_character_and_normalize(item['category'])
-        item['sub_category'] = remove_extra_character_and_normalize(item['sub_category'])
 
-        if 'home' in item_base_name:
-            if self.not_exist(item['token'], 'home'):
+        ad_type = 'home' if 'home' in item_base_name else 'car'
+
+        normalize_item(item, ad_type)
+
+        if ad_type == 'home':
+            if self.not_exist(item['token'], ad_type):
                 self.save_home_data(item)
-        elif 'car' in item_base_name:
-            if self.not_exist(item['token'], 'car'):
+        elif ad_type == 'car':
+            if self.not_exist(item['token'], ad_type):
                 self.save_car_data(item)
 
     def save_home_data(self, item):
@@ -183,9 +185,9 @@ class CansocrawlerPipeline(object):
             self.conn.rollback()
         return item
 
-    def not_exist(self, token, type):
+    def not_exist(self, token, ad_type):
         try:
-            self.cursor.execute(f"select count(token) from {type} where token = {token}")
+            self.cursor.execute(f"select count(token) from {ad_type} where token = {token}")
             data = self.cursor.fetchall()
             if int(data[0][0]) > 0:
                 return False
@@ -195,4 +197,5 @@ class CansocrawlerPipeline(object):
         return True
 
     def insertThis(self, v):
-        return str(v) != '-1' and v != 'not_defined' and v != 'notdefined' and v != '-1.0'
+        return str(v) != '-1' and v != 'not_defined' and v != 'notdefined' and v != '-1.0' and v != 'not-defined'
+
