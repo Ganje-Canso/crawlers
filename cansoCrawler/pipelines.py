@@ -197,5 +197,5 @@ class CansocrawlerPipeline(object):
         return True
 
     def insertThis(self, v):
-        return str(v) != '-1' and v != 'not_defined' and v != 'notdefined' and v != '-1.0' and v != 'not-defined' \
+        return str(v) != '-1' and v != 'not_defined' and v != 'notdefined' and str(v) != '-1.0' and v != 'not-defined' \
                and v != 'NOTDEFINED'

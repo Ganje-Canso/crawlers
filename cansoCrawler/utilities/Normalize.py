@@ -46,7 +46,7 @@ def normalize_floor_covering(floor_covering):
         return 'سنگ'
     if 'لمینت' in floor_covering or 'لمینیت' in floor_covering:
         return 'لمینیت'
-    if 'موزاییک' in floor_covering or 'موزائیک' in floor_covering or 'موزاییك' in floor_covering or 'موزائیك':
+    if 'موزاییک' in floor_covering or 'موزائیک' in floor_covering or 'موزاییك' in floor_covering or 'موزائیك' in floor_covering:
         return 'موزائیک'
     if 'موکت' in floor_covering:
         return 'موکت'
@@ -76,11 +76,13 @@ def normalize_model(model, brand):
 
     if 'سایر مدل ها' in model:
         return 'not_defined'
+    if 'وانت' == model and 'وانت' == brand:
+        return 'not_defined'
+    if 'وانت' in model and 'وانت' == brand:
+        return model.replace('وانت', '').strip()
     if 'سایر' in model:
         return 'not_defined'
-    if 'وانت' in model:
-        return 'وانت'
-    if 'وانت' in model and 'آریسان' in brand:
+    if 'آریسان' in model or 'اریسان' in model:
         return 'آریسان'
     if 'X33S' in model:
         return 'X33 S'
@@ -120,6 +122,8 @@ def normalize_model(model, brand):
         return 'آردی'
     if ('سواری' in model or 'سدان' in model) and 'پیکان' in brand:
         return 'سواری'
+    if 'وانت' in model and 'پیکان' in brand:
+        return 'وانت'
     if 'پرادو' in model:
         return 'پرادو'
     if 'لندکروز' in model:
@@ -258,6 +262,8 @@ def normalize_chassis_type(chassis_type):
         return 'not_defined'
     if 'سواری' in chassis_type or 'سدان' in chassis_type:
         return 'سواری'
+    if 'کوپه' in chassis_type or 'کروک' in chassis_type:
+        return 'کوپه/کروک'
 
     return chassis_type
 
@@ -265,7 +271,7 @@ def normalize_chassis_type(chassis_type):
 def normalize_fuel(fuel):
     fuel = remove_extra_character_and_normalize(fuel)
 
-    if 'دیزل' in fuel or 'گازوییل' in fuel or 'گازوئیل' in fuel or 'گازویل':
+    if 'دیزل' in fuel or 'گازوییل' in fuel or 'گازوئیل' in fuel or 'گازویل' in fuel:
         return 'گازوئیل'
     if 'هیبرید' in fuel:
         return 'هیبریدی'

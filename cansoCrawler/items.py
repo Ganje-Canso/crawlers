@@ -258,13 +258,13 @@ class SheypoorCarItem(CarBaseItem, SheypoorBaseItem):
             self['category'] = 'خودرو'
             self['sub_category'] = 'کلاسیک'
 
-        elif 'سنگین و نیمه سنگین' == self['category']:
+        elif 'سنگین' in self['category']:
             self['category'] = 'خودرو'
-            self['sub_category'] = 'سنگین'
+            self['sub_category'] = 'سنگین و نیمه سنگین'
 
         elif 'کشاورزی و عمرانی' == self['category']:
             self['category'] = 'خودرو'
-            self['sub_category'] = 'سنگین'
+            self['sub_category'] = 'سنگین و نیمه سنگین'
 
         elif 'لوازم و قطعات وسایل نقلیه' == self['category']:
             self['category'] = 'قطعات یدکی و لوازم جانبی خودرو'
@@ -798,11 +798,11 @@ class DivarCarItems(CarBaseItem, BaseItem):
                     self['model'] = '‌سایر مدل‌ها'
 
                 elif 'وانت آریسان آریسان' in i['value']:
-                    self['brand'] = 'آریسان'
-                    self['model'] = 'وانت'
+                    self['brand'] = 'وانت'
+                    self['model'] = 'آریسان'
                 elif 'وانت آریسان' in i['value']:
-                    self['brand'] = 'آریسان'
-                    self['model'] = 'وانت'
+                    self['brand'] = 'وانت'
+                    self['model'] = 'آریسان'
 
                 elif 'هایما S5' in i['value']:
                     self['brand'] = 'هایما'
