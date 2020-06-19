@@ -798,11 +798,11 @@ class DivarCarItems(CarBaseItem, BaseItem):
                     self['model'] = '‌سایر مدل‌ها'
 
                 elif 'وانت آریسان آریسان' in i['value']:
-                    self['brand'] = 'وانت'
-                    self['model'] = 'آریسان'
+                    self['brand'] = 'آریسان'
+                    self['model'] = 'وانت'
                 elif 'وانت آریسان' in i['value']:
-                    self['brand'] = 'وانت'
-                    self['model'] = 'آریسان'
+                    self['brand'] = 'آریسان'
+                    self['model'] = 'وانت'
 
                 elif 'هایما S5' in i['value']:
                     self['brand'] = 'هایما'

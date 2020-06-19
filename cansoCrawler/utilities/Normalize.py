@@ -4,22 +4,22 @@ from hazm import Normalizer
 
 
 def normalize_item(item, ad_type):
+    for k, v in item.items():
+        if k != 'url' and k != 'thumbnail' and isinstance(v, str):
+            item[k] = remove_extra_character_and_normalize(v)
+
     if 'home' == ad_type:
         normalize_home_item(item)
     elif 'car' == ad_type:
         normalize_car_item(item)
-    item['category'] = remove_extra_character_and_normalize(item['category'])
-    item['sub_category'] = remove_extra_character_and_normalize(item['sub_category'])
 
 
 def normalize_home_item(item):
     item['kitchen'] = normalize_kitchen(item['kitchen'])
     item['floor_covering'] = normalize_floor_covering(item['floor_covering'])
-    item['advertiser'] = remove_extra_character_and_normalize(item['advertiser'])
 
 
-def normalize_kitchen(kitchen):
-    kitchen = remove_extra_character_and_normalize(kitchen)
+def normalize_kitchen(kitchen: str):
     if ('mdf' in kitchen or 'MDF' in kitchen or 'ام دی اف' in kitchen) and \
             ('open' in kitchen or 'OPEN' in kitchen or 'اوپن' in kitchen):
         return 'اوپن ام دی اف'
@@ -36,8 +36,7 @@ def normalize_kitchen(kitchen):
     return 'not_defined'
 
 
-def normalize_floor_covering(floor_covering):
-    floor_covering = remove_extra_character_and_normalize(floor_covering)
+def normalize_floor_covering(floor_covering: str):
     if 'پارکت' in floor_covering:
         return 'پارکت'
     if 'سرامیک' in floor_covering or 'سرامیك' in floor_covering:
@@ -58,34 +57,25 @@ def normalize_car_item(item):
     item['model'] = normalize_model(item['model'], item['brand'])
     item['color'] = normalize_color(item['color'])
     item['cash_installment'] = normalize_cash_installment(item['cash_installment'])
-    item['gear_box'] = remove_extra_character_and_normalize(item['gear_box'])
-    item['company'] = remove_extra_character_and_normalize(item['company'])
     item['chassis_type'] = normalize_chassis_type(item['chassis_type'])
-    item['body_condition'] = remove_extra_character_and_normalize(item['body_condition'])
     item['fuel'] = normalize_fuel(item['fuel'])
 
 
-def normalize_model(model, brand):
-    model = remove_extra_character_and_normalize(model)
+def normalize_model(model: str, brand: str):
     model = model.upper()
     model = model.replace('هاچبک', 'هاچ بک')
     model = model.replace('هاچبك', 'هاچ بک')
     model = model.replace('هاچ بك', 'هاچ بک')
+    model = model.replace('صندوقدار', 'صندوق دار')
     model = model.replace('مونتاژ', '')
     model = model.strip()
 
     if 'سایر مدل ها' in model:
         return 'not_defined'
-    if 'وانت' == model and 'وانت' == brand:
-        return 'not_defined'
-    if 'وانت' in model and 'وانت' == brand:
-        return model.replace('وانت', '').strip()
     if 'سایر' in model:
         return 'not_defined'
-    if 'آریسان' in model or 'اریسان' in model:
-        return 'آریسان'
-    if 'X33S' in model:
-        return 'X33 S'
+    if ('آریسان' in model or 'اریسان' in model) and 'آریسان' in brand:
+        return 'not_defined'
     if 'CLA' in model and 'بنز' in brand:
         return 'کلاس CLA'
     if 'CLS' in model and 'بنز' in brand:
@@ -136,14 +126,10 @@ def normalize_model(model, brand):
         return 'صندوق دار'
     if 'هاچ بک' in model and 'تیبا' in brand:
         return 'هاچ بک'
-    if 'جی' in model and '4' in model and 'جک' in brand:
-        return 'J4'
-    if 'جی' in model and '5' in model and 'جک' in brand:
-        return 'J5'
-    if 'اس' in model and '3' in model and 'جک' in brand:
-        return 'S3'
-    if 'اس' in model and '5' in model and 'جک' in brand:
-        return 'S5'
+    if 'جی' in model and 'جک' in brand:
+        return model.replace('جی', 'J')
+    if 'اس' in model and 'جک' in brand:
+        return model.replace('اس', 'S')
     if 'X7' in model and 'جیلی' in brand:
         return 'امگرند ایکس 7'
     if 'RV' in model and '7' in model and 'جیلی' in brand:
@@ -155,7 +141,7 @@ def normalize_model(model, brand):
     if 'دنا' in model and 'دنا' in brand:
         return 'معمولی'
     if '6' in model and 'دی اس' in brand:
-        return 'DS6'
+        return 'DS 6'
     if 'LX' in model and 'رانا' in brand:
         return 'LX'
     if 'EL' in model and 'رانا' in brand:
@@ -202,14 +188,15 @@ def normalize_model(model, brand):
     return model
 
 
-def normalize_brand(brand):
-    brand = remove_extra_character_and_normalize(brand)
+def normalize_brand(brand: str):
     brand = brand.upper()
 
+    if 'وانت' in brand:
+        return 'not_defined'
     if 'آیودی' in brand or 'ایودی' in brand or 'آئودی' in brand or 'ائودی' in brand or 'AUDI' in brand:
         return 'آئودی'
     if 'آریسان' in brand or 'اریسان' in brand:
-        return 'وانت'
+        return 'آریسان'
     if 'آریو' in brand or 'اریو' in brand or 'زوتی' in brand:
         return 'زوتی آریو'
     if 'آلفارومئو' in brand or 'آلفارومیو' in brand or 'الفارومئو' in brand or 'الفارومیو' in brand or 'ALFA ROMEO' in brand:
@@ -236,24 +223,20 @@ def normalize_brand(brand):
     return brand
 
 
-def normalize_color(color):
-    color = remove_extra_character_and_normalize(color)
+def normalize_color(color: str):
     color = color.replace('ئ', 'ی')
     if 'سایر' in color:
         return 'not_defined'
     return color
 
 
-def normalize_cash_installment(cash_installment):
-    cash_installment = remove_extra_character_and_normalize(cash_installment)
+def normalize_cash_installment(cash_installment: str):
     if 'اقساطی' in cash_installment or 'قسطی' in cash_installment:
         return 'قسطی'
     return cash_installment
 
 
-def normalize_chassis_type(chassis_type):
-    chassis_type = remove_extra_character_and_normalize(chassis_type)
-
+def normalize_chassis_type(chassis_type: str):
     chassis_type = chassis_type.replace('هاچبک', 'هاچ بک')
     chassis_type = chassis_type.replace('هاچبك', 'هاچ بک')
     chassis_type = chassis_type.replace('هاچ بك', 'هاچ بک')
@@ -268,9 +251,7 @@ def normalize_chassis_type(chassis_type):
     return chassis_type
 
 
-def normalize_fuel(fuel):
-    fuel = remove_extra_character_and_normalize(fuel)
-
+def normalize_fuel(fuel: str):
     if 'دیزل' in fuel or 'گازوییل' in fuel or 'گازوئیل' in fuel or 'گازویل' in fuel:
         return 'گازوئیل'
     if 'هیبرید' in fuel:
@@ -287,9 +268,10 @@ def normalize_text(string: str):
         return None
 
 
-def remove_extra_character_and_normalize(text, listing=False):
+def remove_extra_character_and_normalize(text: str, listing=False):
     text = normalize_text(text)
     text = convert_digits(text)
+    text = check_space_with_digit(text)
     text = text.replace("(", "")
     text = text.replace(")", "")
     text = text.replace("-", "")
@@ -317,7 +299,7 @@ def remove_extra_character_and_normalize(text, listing=False):
     return " ".join([t.strip() for t in text.split()])
 
 
-def convert_digits(text):
+def convert_digits(text: str):
     result = ""
     for c in text:
         if c == '۰':
@@ -349,3 +331,18 @@ def normalize_and_compare(c1, c2):
     c1 = normalize_text(c1)
     c2 = normalize_text(c2)
     return c1 == c2
+
+
+def check_space_with_digit(text: str):
+    result = ""
+    for t in text:
+        if t.isdigit() and not result[-1:].isdigit() and result[-1:] != " ":
+            result += " " + t
+
+        elif result[-1:].isdigit() and not t.isdigit() and t != " ":
+            result += " " + t
+
+        else:
+            result += t
+
+    return result.strip()
