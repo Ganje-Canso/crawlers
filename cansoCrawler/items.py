@@ -1341,7 +1341,7 @@ class InpinHomeItem(HomeBaseItem, BaseItem):
         self['neighbourhood'] = ((dict_data['estate'] or {}).get('region') or {}).get('name',
                                                                                       'not_defined') or "not_defined"
         self['area'] = (dict_data['estate'] or {}).get('area', -1) or -1
-        self['production'] = (dict_data['estate'] or {}).get('building_age', -1) or -1
+        self['production'] = get_production((dict_data['estate'] or {}).get('building_age', -1) or -1)
         self['room'] = ((dict_data['estate'] or {}).get('residential') or {}).get('number_of_bedrooms', -1) or -1
         self['rent'] = dict_data['rent'] or -1
         self['price'] = (dict_data['sale'] or {}).get('total_price', -1) or -1

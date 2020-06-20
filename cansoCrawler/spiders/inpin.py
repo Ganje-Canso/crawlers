@@ -9,7 +9,7 @@ from cansoCrawler.items import InpinHomeItem
 class InpinSpider(scrapy.Spider):
     name = 'inpin'
     allowed_domains = ['api.inpinapp.com']
-    _pages = 3
+    _pages = 2
 
     def start_requests(self):
         for city in self.city_list:
