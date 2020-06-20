@@ -386,12 +386,6 @@ class BamaCarItem(CarBaseItem, BaseItem):
 class KilidHomeItem(HomeBaseItem, BaseItem):
     deal_type = scrapy.Field()
 
-    def get_production(self, data):
-        if data is None:
-            return -1
-        else:
-            return datetime.datetime.today().year - 621 - int(data)
-
     def get_thumbnail(self, data):
         if data is None:
             return "not_defined"
@@ -445,7 +439,7 @@ class KilidHomeItem(HomeBaseItem, BaseItem):
         self['title'] = data_dict['title'] or "not_defined"
         self['city'] = data_dict['city'] or "not_defined"
         self['neighbourhood'] = data_dict['neighbourhood'] or "not_defined"
-        self['production'] = self.get_production(data_dict['age'])
+        self['production'] = get_production(data_dict['age'])
         self['room'] = int(data_dict['noBeds'] or -1)
         self['area'] = int(data_dict['floorArea'] or -1)
         self['price'] = int(data_dict['price'] or -1)
@@ -1274,6 +1268,90 @@ class DivarHomeItems(HomeBaseItem, BaseItem):
             self['sub_category'] = 'سایر املاک'
 
 
+class InpinHomeItem(HomeBaseItem, BaseItem):
+    estate_type_dict = {
+        '1': 'آپارتمان',
+        '2': 'ویلا',
+        '3': 'باغ ویلا',
+        '4': 'مغازه',
+        '5': 'پنت هاس',
+        '6': 'زمین',
+        '7': 'کلنگی',
+        '8': 'باغ باغچه',
+        '9': 'مستغلات',
+        '10': 'کارخانه',
+        '11': 'سوییت',
+        '12': 'دامداری',
+        '13': 'انبار',
+        '14': 'سوله',
+        '15': 'استودیو',
+        '16': 'سالن تالار',
+    }
+
+    def set_thumbnail(self, files):
+        for file in files:
+            if file['type'].upper() == 'IMAGE':
+                self['thumbnail'] = f"https://file.inpinapp.com/img/200/{file['path']}"
+                break
+
+    def check_property(self, properties):
+        for property in properties:
+            if 'parking' in property['title'].lower():
+                self['parking'] = (property['pivot']['number'] or -1) > 0
+            if 'elevator' in property['title'].lower():
+                self['elevator'] = (property['pivot']['number'] or -1) > 0
+            if 'warehouse' in property['title'].lower():
+                self['storeroom'] = True
+            if 'balcony' in property['title'].lower():
+                self['balcony'] = True
+            if 'FLOORING_TYPE' in property['category'].upper():
+                if 'ceramic' in property['title'].lower():
+                    self['floor_covering'] = 'سرامیک'
+                if 'stone' in property['title'].lower():
+                    self['floor_covering'] = 'سنگ'
+                if 'mosaic' in property['title'].lower():
+                    self['floor_covering'] = 'موزائیک'
+                if 'carpet' in property['title'].lower():
+                    self['floor_covering'] = 'موکت'
+            if 'cooler' in property['title'].lower():
+                self['cooler'] = True
+            if 'package' in property['title'].lower():
+                self['package'] = True
+            if 'CABINET_TYPE' in property['category'].upper():
+                self['kitchen'] = property['title'].lower()
+            if 'GEOGRAPHICAL_DIRECTION' in property['category'].upper():
+                if 'north' in property['title'].lower():
+                    self['estate_direction'] = 'شمالی'
+                if 'south' in property['title'].lower():
+                    self['estate_direction'] = 'جنوبی'
+                if 'west' in property['title'].lower():
+                    self['estate_direction'] = 'غربی'
+                if 'east' in property['title'].lower():
+                    self['estate_direction'] = 'شرقی'
+
+    def extract(self, dict_data):
+        self['time'] = get_time_stamp()
+        self['token'] = hash_token(dict_data['id'])
+        self['url'] = f"https://www.inpinapp.com/fa/ad/{dict_data['id']}"
+        self['source_id'] = 7
+        self['title'] = self.estate_type_dict.get(
+            str(((dict_data['estate'] or {}).get('estate_type') or {}).get('id') or -1), "") + " " + \
+                        ((dict_data['estate'] or {}).get('region') or {}).get('name', "") or ""
+        self['description'] = dict_data['description'] or "not_defined"
+        self['neighbourhood'] = ((dict_data['estate'] or {}).get('region') or {}).get('name',
+                                                                                      'not_defined') or "not_defined"
+        self['area'] = (dict_data['estate'] or {}).get('area', -1) or -1
+        self['production'] = (dict_data['estate'] or {}).get('building_age', -1) or -1
+        self['room'] = ((dict_data['estate'] or {}).get('residential') or {}).get('number_of_bedrooms', -1) or -1
+        self['rent'] = dict_data['rent'] or -1
+        self['price'] = (dict_data['sale'] or {}).get('total_price', -1) or -1
+        self['latitude'] = float(((dict_data['estate'] or {}).get('location') or {}).get('coordinates')[1] or -1)
+        self['longitude'] = float(((dict_data['estate'] or {}).get('location') or {}).get('coordinates')[0] or -1)
+        self['estate_floor'] = ((dict_data['estate'] or {}).get('residential') or {}).get('floor_number', -1) or -1
+        self.set_thumbnail((dict_data['estate'] or {}).get('files', []))
+        self.check_property((dict_data['estate'] or {}).get('properties', []))
+
+
 def clean_number(data, int_type=True):
     clean_data = "-1"
     for c in str(data):
@@ -1293,3 +1371,10 @@ def hash_token(token):
 
 def get_time_stamp():
     return int(datetime.datetime.now().timestamp())
+
+
+def get_production(age):
+    if age is None:
+        return -1
+    else:
+        return datetime.datetime.today().year - 621 - int(age)
