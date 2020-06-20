@@ -15,11 +15,15 @@ class CedarSpider(scrapy.Spider):
                     callback=self.parse, cb_kwargs={'city': city, 'province': province})
 
     def parse(self, response, city, province):
-        coordinate = json.loads(response.body.decode('UTF-8'))['results'][0]['location']['center']
+        coordinate = json.loads(response.body.decode('UTF-8'))['results'][0]['location']
 
         yield {
-            '0': coordinate.split(',')[0],
-            '1': coordinate.split(',')[1],
+            'lat': coordinate['center'].split(',')[0],
+            'lon': coordinate['center'].split(',')[1],
+            'lat+': coordinate['bb']['ne'].split(',')[0],
+            'lon+': coordinate['bb']['ne'].split(',')[1],
+            'lat-': coordinate['bb']['sw'].split(',')[0],
+            'lon-': coordinate['bb']['sw'].split(',')[1],
             'city': city,
             'province': province
         }
