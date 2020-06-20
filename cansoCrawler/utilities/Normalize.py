@@ -68,6 +68,8 @@ def normalize_model(model: str, brand: str):
     model = model.replace('هاچ بك', 'هاچ بک')
     model = model.replace('صندوقدار', 'صندوق دار')
     model = model.replace('مونتاژ', '')
+    model = model.replace('سدان', '')
+    model = model.replace('سواری', '')
     model = model.strip()
 
     if 'سایر مدل ها' in model:

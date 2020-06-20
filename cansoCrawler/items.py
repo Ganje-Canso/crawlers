@@ -1288,11 +1288,57 @@ class InpinHomeItem(HomeBaseItem, BaseItem):
         '16': 'سالن تالار',
     }
 
+    application_type_dict = {
+        '1': 'مسکونی',
+        '2': 'اداری و تجاری',
+        '3': 'اداری و تجاری',
+        '4': 'اداری و تجاری',
+        '5': 'سایر املاک',
+        '6': 'اداری و تجاری',
+        '7': 'زمین کلنگی و باغ',
+        '8': 'اداری و تجاری',
+        '9': 'سایر املاک',
+        '10': 'اداری و تجاری',
+        '11': 'اداری و تجاری',
+        '12': 'اداری و تجاری'
+    }
+
+    def set_category(self, _type, applications):
+        application_id = '-1'
+        _type = str(_type)
+        if len(applications) > 0:
+            application_id = str(applications[0]['id'])
+
+        app_name = self.application_type_dict.get(application_id, '')
+
+        if 'سایر' in app_name or 'باغ' in app_name:
+            self['category'] = app_name
+            return
+
+        self['category'] = self['category'] + app_name
+
+        if 'اداری' in app_name:
+            if _type == '1' or _type == '11':
+                self['sub_category'] = 'دفتر کار اتاق اداری و مطب'
+            if _type == '6' or _type == '8' or _type == '10' or _type == '12' or _type == '13' or _type == '14' or _type == '15' or _type == '16':
+                self['sub_category'] = 'صنعتی کشاورزی و تجاری'
+            if _type == '4':
+                self['sub_category'] = 'مغازه و غرفه'
+
+        if 'مسکونی' in app_name:
+            if _type == '1' or _type == '1':
+                self['sub_category'] = 'آپارتمان'
+            if _type == '2' or _type == '3' or _type == '5' or _type == '11':
+                self['sub_category'] = 'خانه و ویلا'
+            if _type == '6' or _type == '7':
+                self['sub_category'] = 'زمین و کلنگی'
+
     def set_thumbnail(self, files):
         for file in files:
             if file['type'].upper() == 'IMAGE':
                 self['thumbnail'] = f"https://file.inpinapp.com/img/200/{file['path']}"
                 break
+        self['thumbnail'] = 'not_defined'
 
     def check_property(self, properties):
         for property in properties:
@@ -1335,7 +1381,7 @@ class InpinHomeItem(HomeBaseItem, BaseItem):
         self['url'] = f"https://www.inpinapp.com/fa/ad/{dict_data['id']}"
         self['source_id'] = 7
         self['title'] = self.estate_type_dict.get(
-            str(((dict_data['estate'] or {}).get('estate_type') or {}).get('id') or -1), "") + " " + \
+            str(((dict_data['estate'] or {}).get('estate_type') or {}).get('id') or '-1'), "") + " " + \
                         ((dict_data['estate'] or {}).get('region') or {}).get('name', "") or ""
         self['description'] = dict_data['description'] or "not_defined"
         self['neighbourhood'] = ((dict_data['estate'] or {}).get('region') or {}).get('name',
@@ -1350,6 +1396,8 @@ class InpinHomeItem(HomeBaseItem, BaseItem):
         self['estate_floor'] = ((dict_data['estate'] or {}).get('residential') or {}).get('floor_number', -1) or -1
         self.set_thumbnail((dict_data['estate'] or {}).get('files', []))
         self.check_property((dict_data['estate'] or {}).get('properties', []))
+        self.set_category((dict_data['estate'] or {}).get('estate_type', {}).get('id', '-1'),
+                          (dict_data['estate'] or {}).get('applications', []))
 
 
 def clean_number(data, int_type=True):
