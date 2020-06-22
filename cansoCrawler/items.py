@@ -1400,6 +1400,36 @@ class InpinHomeItem(HomeBaseItem, BaseItem):
                           (dict_data['estate'] or {}).get('applications', []))
 
 
+class IranpelakCarItem(CarBaseItem, BaseItem):
+
+    def extract(self, response):
+        self['time'] = get_time_stamp()
+        self['source_id'] = 8
+        url = response.request.url
+        self['url'] = url
+        self['thumbnail'] = response.css('div[itemprop="image"] img::attr(src)').get('not_defined')
+        self['category'] = 'خودرو'
+        self['sub_category'] = 'سواری'
+        self['brand'] = response.css('div.header-carname label[itemprop="brand"]::text').get('not_defined').strip()
+        self['model'] = response.css('div.header-carname label[itemprop="model"]::text').get('not_defined').strip()
+        self['production'] = response.css('div.header-carname label[itemprop="releaseDate"]::text').get(
+            'not_defined').strip()
+        self['title'] = self['brand'] + " " + self['model'] + " " + self['production']
+        self['production'] = self['production'].replace('(', '')
+        self['production'] = int(self['production'].replace(')', '') or -1)
+        self['gear_box'] = response.css('div.detail-result-icon').css(
+            'label[itemprop="vehicleTransmission"]::text').get("not_defined")
+        self['consumption'] = clean_number(
+            response.css('div.detail-result-icon').css('label[itemprop="value"]::text').get("-1"))
+        self['color'] = response.css('div.detail-result-icon').css('label[itemprop="color"]::text').get("not_defined")
+        province_city = response.css('div.detail-result-icon label::text').get()
+        self['province'] = province_city.split('-')[0] or "not_defined"
+        self['city'] = province_city.split('-')[1] or "not_defined"
+        self['fuel'] = response.css('label[itemprop="fuelType"]::text').get("not_defined")
+        description = response.css('div.search-resualt-tozihat label::text').getall()
+        self['description'] = description[1] if len(description) > 0 else "not_defined"
+
+
 def clean_number(data, int_type=True):
     clean_data = "-1"
     for c in str(data):
