@@ -1337,7 +1337,7 @@ class InpinHomeItem(HomeBaseItem, BaseItem):
         for file in files:
             if file['type'].upper() == 'IMAGE':
                 self['thumbnail'] = f"https://file.inpinapp.com/img/200/{file['path']}"
-                break
+                return
         self['thumbnail'] = 'not_defined'
 
     def check_property(self, properties):
@@ -1422,7 +1422,7 @@ def get_time_stamp():
 
 
 def get_production(age):
-    if age is None:
+    if age is None or age == -1 or age == '-1':
         return -1
     else:
         return datetime.datetime.today().year - 621 - int(age)
