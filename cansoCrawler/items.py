@@ -1406,6 +1406,7 @@ class IranpelakCarItem(CarBaseItem, BaseItem):
         self['time'] = get_time_stamp()
         self['source_id'] = 8
         url = response.request.url
+        self['token'] = hash_token(url.split('/')[-1])
         self['url'] = url
         self['thumbnail'] = response.css('div[itemprop="image"] img::attr(src)').get('not_defined')
         self['category'] = 'خودرو'
@@ -1417,6 +1418,8 @@ class IranpelakCarItem(CarBaseItem, BaseItem):
         self['title'] = self['brand'] + " " + self['model'] + " " + self['production']
         self['production'] = self['production'].replace('(', '')
         self['production'] = int(self['production'].replace(')', '') or -1)
+        if self['production'] > datetime.datetime.today().year - 600:
+            self['production'] = self['production'] - 621
         self['gear_box'] = response.css('div.detail-result-icon').css(
             'label[itemprop="vehicleTransmission"]::text').get("not_defined")
         self['consumption'] = clean_number(
@@ -1427,7 +1430,12 @@ class IranpelakCarItem(CarBaseItem, BaseItem):
         self['city'] = province_city.split('-')[1] or "not_defined"
         self['fuel'] = response.css('label[itemprop="fuelType"]::text').get("not_defined")
         description = response.css('div.search-resualt-tozihat label::text').getall()
-        self['description'] = description[1] if len(description) > 0 else "not_defined"
+        if len(description) == 3:
+            self['description'] = description[2]
+        elif len(description) == 2:
+            self['description'] = description[1]
+        else:
+            self['description'] = "not_defined"
 
 
 def clean_number(data, int_type=True):

@@ -2,6 +2,8 @@
 import scrapy
 from scrapy import FormRequest
 
+from cansoCrawler.items import IranpelakCarItem
+
 
 class IranpelakSpider(scrapy.Spider):
     name = 'iranpelak'
@@ -9,7 +11,7 @@ class IranpelakSpider(scrapy.Spider):
     start_urls = ['https://iranpelak.com/car-search']
     url = 'https://iranpelak.com/faces/root/car-search.xhtml'
     token = ""
-    _pages = 3
+    _pages = 9
 
     def parse(self, response):
         self.token = response.css('input[name="javax.faces.ViewState"]::attr(value)').get()
@@ -21,11 +23,12 @@ class IranpelakSpider(scrapy.Spider):
 
     def parse_ads(self, response, page=2):
         # [href[:href.find('jsessionid') - 1] for href in (response.css('a::attr(href)').getall()) if 'ad-' in href]
-        href_list = [f"https://iranpelak.com/{href}" for href in (response.css('a::attr(href)').getall()) if
+        href_list = [f"https://iranpelak.com{href}" for href in (response.css('a::attr(href)').getall()) if
                      'ad-' in href]
         self.logger.info(f"href_list length: {len(href_list)}")
+        self.logger.info(f"href_list: {href_list}")
 
-        yield response.follow_all(href_list, callback=self.parse_ad, headers=self.headers)
+        yield from response.follow_all(href_list, callback=self.parse_ad, headers=self.headers)
 
         if page <= self._pages:
             yield FormRequest(url=self.url, method="POST", formdata=self.create_form_data(page),
@@ -33,7 +36,10 @@ class IranpelakSpider(scrapy.Spider):
                               headers=self.headers, cb_kwargs={"page": page + 1})
 
     def parse_ad(self, response):
-        pass
+        self.logger.info(f"extract for: {response.request.url.split('/')[-1]}")
+        item = IranpelakCarItem()
+        item.extract(response)
+        return item
 
     def create_form_data(self, page):
         return {
