@@ -7,7 +7,6 @@ from cansoCrawler.items import SheypoorHomeItem, SheypoorCarItem
 class SheypoorSpider(scrapy.Spider):
     name = 'sheypoor'
     allowed_domains = ['sheypoor.com']
-    start_urls = ['https://sheypoor.com/']
     category = ''
     _pages = 5
 
@@ -15,23 +14,13 @@ class SheypoorSpider(scrapy.Spider):
         self.category = category
         super().__init__(**kwargs)
 
+    def start_requests(self):
+        if self.category == 'home':
+            yield scrapy.Request(url="https://www.sheypoor.com/%D8%A7%DB%8C%D8%B1%D8%A7%D9%86/%D8%A7%D9%85%D9%84%D8%A7%DA%A9", callback=self.parse)
+        elif self.category == 'car':
+            yield scrapy.Request(url="https://www.sheypoor.com/%D8%A7%DB%8C%D8%B1%D8%A7%D9%86/%D9%88%D8%B3%D8%A7%DB%8C%D9%84-%D9%86%D9%82%D9%84%DB%8C%D9%87", callback=self.parse)
+
     def parse(self, response):
-        self.logger.info('get categories from: %s', self.start_urls[0])
-        liList = response.css('div#categories-card li.card')
-        for i in range(10):
-            if i < 4:
-                category_url = liList[i].xpath('./div[1]/a/@href').get().strip()
-                category = liList[i].xpath('./div[1]/a/span[2]/text()').get().strip()
-            else:
-                category = liList[i].xpath('./a/div/text()').get().strip(' ')
-                category_url = liList[i].xpath('./a/@href').get().strip(' ')
-
-            if category == self.translate_category():
-                yield response.follow(category_url,
-                                      callback=self.parse_sub_category)
-                break
-
-    def parse_sub_category(self, response):
         self.logger.info('get sub_categories for: %s', self.category)
         liList = response.css('section#categories').xpath('./div/ul/li')
         for li in liList:
@@ -58,6 +47,29 @@ class SheypoorSpider(scrapy.Spider):
                                   )
 
     def parse_ad(self, response, sub_category, page):
+        nav = " ".join(response.css('nav#breadcrumbs ul').xpath('./li').getall())
+        category_list = [
+            "املاک",
+            "وسایل نقلیه"
+            "ورزش فرهنگ فراغت",
+            "لوازم الکترونیکی",
+            "استخدام",
+            "صنعتی، اداری و تجاری",
+            "خدمات و کسب و کار",
+            "موبایل، تبلت و لوازم",
+            "لوازم خانگی",
+            "لوازم شخصی",
+        ]
+        self.logger.info(f"nav: {nav}")
+        for category in category_list:
+            if category == 'وسایل نقلیه' and self.category == 'car':
+                continue
+            if category == 'املاک' and self.category == 'home':
+                continue
+            if category in nav:
+                self.logger.info(f"wrong category({category}) for: {response.request.url} | wrong nav: {nav}")
+                return None
+
         if self.category == 'home':
             item = SheypoorHomeItem()
             item['category'] = sub_category
@@ -70,17 +82,3 @@ class SheypoorSpider(scrapy.Spider):
             return item
 
         return None
-
-    def translate_category(self):
-        return {
-            "home": "املاک",
-            "car": "وسایل نقلیه",
-            "sport": "ورزش فرهنگ فراغت",
-            "electronic": "لوازم الکترونیکی",
-            "job": "استخدام",
-            "industry": "صنعتی، اداری و تجاری",
-            "service": "خدمات و کسب و کار",
-            "mobile": "موبایل، تبلت و لوازم",
-            "home_appliance": "لوازم خانگی",
-            "personal": "لوازم شخصی",
-        }.get(self.category, "none")

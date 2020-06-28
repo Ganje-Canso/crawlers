@@ -8,6 +8,8 @@ import scrapy
 
 import datetime
 
+from cansoCrawler.utilities.Normalize import clean_number
+
 
 class BaseItem(scrapy.Item):
     token = scrapy.Field()
@@ -126,7 +128,7 @@ class SheypoorBaseItem(BaseItem):
         dirty_token = url_sections[len(url_sections) - 1]
         token = dirty_token[0:dirty_token.find('.htm')]
         try:
-            self['token'] = hash_token(token)
+            self['token'] = hash_token(token, 2)
         except:
             self['token'] = -1
         self['source_id'] = 2
@@ -253,36 +255,49 @@ class SheypoorCarItem(CarBaseItem, SheypoorBaseItem):
 
         elif 'موتور سیکلت' == self['category']:
             self['category'] = 'موتورسیکلت و لوازم جانبی'
+            self['brand'] = 'not_defined'
+            self['model'] = 'not_defined'
 
         elif 'خودرو کلاسیک' == self['category']:
             self['category'] = 'خودرو'
             self['sub_category'] = 'کلاسیک'
+            self['brand'] = 'not_defined'
+            self['model'] = 'not_defined'
 
         elif 'سنگین' in self['category']:
             self['category'] = 'خودرو'
             self['sub_category'] = 'سنگین و نیمه سنگین'
+            self['brand'] = 'not_defined'
+            self['model'] = 'not_defined'
 
         elif 'کشاورزی و عمرانی' == self['category']:
             self['category'] = 'خودرو'
             self['sub_category'] = 'سنگین و نیمه سنگین'
+            self['brand'] = 'not_defined'
+            self['model'] = 'not_defined'
 
         elif 'لوازم و قطعات وسایل نقلیه' == self['category']:
             self['category'] = 'قطعات یدکی و لوازم جانبی خودرو'
+            self['brand'] = 'not_defined'
+            self['model'] = 'not_defined'
 
         elif 'اجاره خودرو' == self['category']:
             self['category'] = 'خودرو'
             self['sub_category'] = 'اجاره‌ای'
+            self['brand'] = 'not_defined'
+            self['model'] = 'not_defined'
 
-        elif 'سایر وسایل نقلیه' == self['category']:
-            pass
+        else:
+            self['category'] = 'سایر وسایل نقلیه'
+            self['brand'] = 'not_defined'
+            self['model'] = 'not_defined'
 
     def extract(self, response):
         SheypoorBaseItem.extract(self, response)
         nav = response.css('nav#breadcrumbs ul').xpath('./li')
         brand = nav[len(nav) - 1].xpath('./a/text()').get(default="not_defined").strip()
-        if self['category'] not in brand:
+        if self['category'] not in brand and brand not in self['category'] and self['category'] != brand:
             self['brand'] = brand
-        self.clean_category()
         tr_list = response.css('section#item-details').xpath('./table/tr')
         for tr in tr_list:
             key = tr.xpath('./th/text()').get().strip()
@@ -307,6 +322,7 @@ class SheypoorCarItem(CarBaseItem, SheypoorBaseItem):
                 self['body_condition'] = value
             if 'نوع شاسی' in key:
                 self['chassis_type'] = value
+        self.clean_category()
 
 
 class BamaCarItem(CarBaseItem, BaseItem):
@@ -326,7 +342,7 @@ class BamaCarItem(CarBaseItem, BaseItem):
             self['category'] = 'موتورسیکلت و لوازم جانبی'
         url = response.request.url
         self['url'] = url
-        self['token'] = hash_token(url.split('-')[1])
+        self['token'] = hash_token(url.split('-')[1], 3)
         info_right = response.css('div.inforight')
         description = response.css('div.addetaildesc').xpath('./span/text()').get(default="not_defined").strip()
         self['description'] = description
@@ -432,7 +448,7 @@ class KilidHomeItem(HomeBaseItem, BaseItem):
                 self['sub_category'] = 'صنعتی،‌ کشاورزی و تجاری'
 
     def extract(self, data_dict):
-        self['token'] = hash_token(data_dict['listingId'] or "-1")
+        self['token'] = hash_token(data_dict['listingId'] or "-1", 4)
         self['url'] = f"https://kilid.com/{self['deal_type']}/detail/{data_dict['listingId']}"
         self['source_id'] = 4
         self['time'] = get_time_stamp()
@@ -514,7 +530,7 @@ class IhomeHomeItem(HomeBaseItem, BaseItem):
                 other_dict['floor_covering '] = self.get_floor_cover(other_dict['values'])
 
     def extract(self, dict_data):
-        self['token'] = hash_token(dict_data['code'])
+        self['token'] = hash_token(dict_data['code'], 5)
         self['url'] = f"https://ihome.ir/details-page/{dict_data['code']}"
         self['source_id'] = 5
         self['time'] = get_time_stamp()
@@ -548,7 +564,7 @@ class MelkanaHomeItem(HomeBaseItem, BaseItem):
 
     def extract(self, dict_data):
         details = dict_data['details']
-        self['token'] = hash_token(details['code'])
+        self['token'] = hash_token(details['code'], 6)
         self['url'] = f"https://www.melkana.com/estate/detail/{details['code']}"
         self['source_id'] = 6
         self['time'] = get_time_stamp()
@@ -1128,7 +1144,7 @@ class DivarCarItems(CarBaseItem, BaseItem):
         self['time'] = get_time_stamp()
         self['title'] = data['data']['share']['title']
         self['description'] = data['widgets']['description']
-        self['token'] = hash_token(data['token'])
+        self['token'] = hash_token(data['token'], 1)
         self['source_id'] = 1
         self['url'] = data['data']['url']
         self['thumbnail'] = data['data']['seo'].get('thumbnail', 'not_defined')
@@ -1147,7 +1163,7 @@ class DivarCarItems(CarBaseItem, BaseItem):
             self['category'] = 'خودرو'
             self['sub_category'] = subcategory
         elif subcategory == 'قطعات یدکی و لوازم جانبی خودرو':
-            self['category'] = 'قطعات یدکی و لوازم جانبی وسایل نقلیه'
+            self['category'] = 'قطعات یدکی و لوازم جانبی خودرو'
         elif subcategory == 'موتورسیکلت و لوازم جانبی':
             self['category'] = 'موتورسیکلت و لوازم جانبی'
         elif subcategory == 'قایق و لوازم جانبی':
@@ -1195,7 +1211,7 @@ class DivarHomeItems(HomeBaseItem, BaseItem):
                     self['area'] = int(i['value'].split(' ')[0])
                 except:
                     self['area'] = -1
-            elif 'قیمت' in i['title']:
+            elif 'قیمت' in i['title'] and 'متر' not in i['title']:
                 try:
                     self['price'] = int(i['value'].replace('تومان', '').strip().replace('٫', ''))
                 except:
@@ -1229,7 +1245,7 @@ class DivarHomeItems(HomeBaseItem, BaseItem):
         self['time'] = get_time_stamp()
         self['title'] = data['data']['share']['title']
         self['description'] = data['widgets']['description']
-        self['token'] = hash_token(data['token'])
+        self['token'] = hash_token(data['token'], 1)
         self['source_id'] = 1
         self['url'] = data['data']['url']
         self['thumbnail'] = data['data']['seo'].get('thumbnail', 'not_defined')
@@ -1377,16 +1393,18 @@ class InpinHomeItem(HomeBaseItem, BaseItem):
 
     def extract(self, dict_data):
         self['time'] = get_time_stamp()
-        self['token'] = hash_token(dict_data['id'])
+        self['token'] = hash_token(dict_data['id'], 7)
         self['url'] = f"https://www.inpinapp.com/fa/ad/{dict_data['id']}"
         self['source_id'] = 7
+        self['area'] = (dict_data['estate'] or {}).get('area', -1) or -1
         self['title'] = self.estate_type_dict.get(
             str(((dict_data['estate'] or {}).get('estate_type') or {}).get('id') or '-1'), "") + " " + \
-                        ((dict_data['estate'] or {}).get('region') or {}).get('name', "") or ""
+                        ((dict_data['estate'] or {}).get('region') or {}).get('name', "") or "" + " " + \
+                        f"{self['area']} متر" if self['area'] != -1 else ""
+
         self['description'] = dict_data['description'] or "not_defined"
         self['neighbourhood'] = ((dict_data['estate'] or {}).get('region') or {}).get('name',
                                                                                       'not_defined') or "not_defined"
-        self['area'] = (dict_data['estate'] or {}).get('area', -1) or -1
         self['production'] = get_production((dict_data['estate'] or {}).get('building_age', -1) or -1)
         self['room'] = ((dict_data['estate'] or {}).get('residential') or {}).get('number_of_bedrooms', -1) or -1
         self['rent'] = dict_data['rent'] or -1
@@ -1406,7 +1424,7 @@ class IranpelakCarItem(CarBaseItem, BaseItem):
         self['time'] = get_time_stamp()
         self['source_id'] = 8
         url = response.request.url
-        self['token'] = hash_token(url.split('/')[-1])
+        self['token'] = hash_token(url.split('/')[-1], 8)
         self['url'] = url
         self['thumbnail'] = response.css('div[itemprop="image"] img::attr(src)').get('not_defined')
         self['category'] = 'خودرو'
@@ -1438,20 +1456,9 @@ class IranpelakCarItem(CarBaseItem, BaseItem):
             self['description'] = "not_defined"
 
 
-def clean_number(data, int_type=True):
-    clean_data = "-1"
-    for c in str(data):
-        if c.isdigit():
-            if clean_data == "-1":
-                clean_data = ""
-            clean_data += c
-    if int_type:
-        return int(clean_data)
-    return clean_data
-
-
-def hash_token(token):
+def hash_token(token, source_id):
     import hashlib
+    token = f"{token}{source_id}"
     return int(str(int(hashlib.sha1(str(token).encode()).hexdigest(), 16))[:18])
 
 
