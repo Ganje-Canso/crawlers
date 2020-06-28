@@ -1,6 +1,7 @@
 import sqlite3
 
 from hazm import Normalizer
+import datetime
 
 
 def normalize_item(item, ad_type):
@@ -59,6 +60,8 @@ def normalize_car_item(item):
     item['cash_installment'] = normalize_cash_installment(item['cash_installment'])
     item['chassis_type'] = normalize_chassis_type(item['chassis_type'])
     item['fuel'] = normalize_fuel(item['fuel'])
+    item['gear_box'] = normalize_gear_box(item['gear_box'])
+    item['production'] = normalize_production(item['production'])
 
 
 def normalize_model(model: str, brand: str):
@@ -112,7 +115,7 @@ def normalize_model(model: str, brand: str):
         return 'پارس'
     if ('روا' in model or 'روآ' in model or 'آردی' in model or 'اردی' in model or 'RD' in model) and 'پژو' in brand:
         return 'آردی'
-    if ('سواری' in model or 'سدان' in model) and 'پیکان' in brand:
+    if ('سواری' in model or 'سدان' in model or 'پیکان' in model) and 'پیکان' in brand:
         return 'سواری'
     if 'وانت' in model and 'پیکان' in brand:
         return 'وانت'
@@ -193,7 +196,17 @@ def normalize_model(model: str, brand: str):
 def normalize_brand(brand: str):
     brand = brand.upper()
 
-    if 'وانت' in brand:
+    brand = brand.replace('هاچبک', '')
+    brand = brand.replace('هاچبك', '')
+    brand = brand.replace('هاچ بك', '')
+    brand = brand.replace('هاچ بک', '')
+    brand = brand.replace('صندوقدار', '')
+    brand = brand.replace('صندوق دار', '')
+    brand = brand.replace('مونتاژ', '')
+    brand = brand.replace('سدان', '')
+    brand = brand.replace('سواری', '')
+
+    if 'وانت' in brand or 'سایر' in brand:
         return 'not_defined'
     if 'آیودی' in brand or 'ایودی' in brand or 'آئودی' in brand or 'ائودی' in brand or 'AUDI' in brand:
         return 'آئودی'
@@ -201,7 +214,7 @@ def normalize_brand(brand: str):
         return 'آریسان'
     if 'آریو' in brand or 'اریو' in brand or 'زوتی' in brand:
         return 'زوتی آریو'
-    if 'آلفارومئو' in brand or 'آلفارومیو' in brand or 'الفارومئو' in brand or 'الفارومیو' in brand or 'ALFA ROMEO' in brand:
+    if 'آلفا رومئو' in brand or 'آلفارومئو' in brand or 'آلفارومیو' in brand or 'الفارومئو' in brand or 'الفارومیو' in brand or 'ALFA ROMEO' in brand:
         return 'آلفارومئو'
     if 'اس دبلیو ام' in brand or 'SWM' in brand:
         return 'اس دبلیو ام'
@@ -219,6 +232,12 @@ def normalize_brand(brand: str):
         return 'سیتروئن'
     if 'فولکس' in brand:
         return 'فولکس'
+    if 'کیا' in brand:
+        return 'کیا'
+    if 'گک' in brand:
+        return 'گک'
+    if 'دانگ' in brand and 'فنگ' in brand:
+        return 'دانگ فنگ'
     if 'قطعات' in brand:
         return 'not_defined'
 
@@ -229,6 +248,8 @@ def normalize_color(color: str):
     color = color.replace('ئ', 'ی')
     if 'سایر' in color:
         return 'not_defined'
+    if 'قهو' in color:
+        return 'قهوه ای'
     return color
 
 
@@ -243,14 +264,22 @@ def normalize_chassis_type(chassis_type: str):
     chassis_type = chassis_type.replace('هاچبك', 'هاچ بک')
     chassis_type = chassis_type.replace('هاچ بك', 'هاچ بک')
 
-    if 'دیگر' in chassis_type:
-        return 'not_defined'
-    if 'سواری' in chassis_type or 'سدان' in chassis_type:
+    if 'سواری' in chassis_type or 'سدان' in chassis_type or 'صندوق' in chassis_type:
         return 'سواری'
-    if 'کوپه' in chassis_type or 'کروک' in chassis_type:
+    elif 'کوپه' in chassis_type or 'کروک' in chassis_type or 'کروك' in chassis_type:
         return 'کوپه/کروک'
-
-    return chassis_type
+    elif 'نیمه' in chassis_type:
+        return 'نیمه شاسی'
+    elif 'شاسی' in chassis_type:
+        return 'شاسی بلند'
+    elif 'وانت' in chassis_type:
+        return 'وانت'
+    elif 'ون' in chassis_type:
+        return 'ون'
+    elif 'استیشن' in chassis_type:
+        return 'استیشن'
+    else:
+        return 'not_defined'
 
 
 def normalize_fuel(fuel: str):
@@ -258,8 +287,25 @@ def normalize_fuel(fuel: str):
         return 'گازوئیل'
     if 'هیبرید' in fuel:
         return 'هیبریدی'
-
+    if ('گاز' in fuel and 'بنز' in fuel) or 'دو' in fuel:
+        return 'دوگانه سوز'
     return fuel
+
+
+def normalize_gear_box(gear_box: str):
+    if 'دنده' in gear_box:
+        return 'دنده ای'
+    if 'اتومات' in gear_box:
+        return 'اتوماتیک'
+
+    return gear_box
+
+
+def normalize_production(production):
+    production = clean_number(production)
+    if production > (datetime.datetime.today().year - 620):
+        return production - 621
+    return production
 
 
 def normalize_text(string: str):
@@ -348,3 +394,19 @@ def check_space_with_digit(text: str):
             result += t
 
     return result.strip()
+
+
+def clean_number(data, int_type=True):
+    if str(data) == "-1":
+        if int_type:
+            return int(data)
+        return data
+    clean_data = "-1"
+    for c in str(data):
+        if c.isdigit():
+            if clean_data == "-1":
+                clean_data = ""
+            clean_data += c
+    if int_type:
+        return int(clean_data)
+    return clean_data
