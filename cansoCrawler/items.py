@@ -848,13 +848,13 @@ class DivarCarItems(CarBaseItem, BaseItem):
 
                 elif 'جیلی Emgrand 7' in i['value']:
                     self['brand'] = 'جیلی'
-                    self['model'] = 'Emgrand 7'
+                    self['model'] = 'امگرند 7'
                 elif 'جیلی Emgrand 7_RV' in i['value']:
                     self['brand'] = 'جیلی'
-                    self['model'] = 'Emgrand 7_RV'
+                    self['model'] = 'امگرند آر وی 7'
                 elif 'جیلی Emgrand X7' in i['value']:
                     self['brand'] = 'جیلی'
-                    self['model'] = 'Emgrand X7'
+                    self['model'] = 'امگرند ایکس 7'
                 elif 'جیلی GC6' in i['value']:
                     self['brand'] = 'جیلی'
                     self['model'] = 'GC6'
@@ -1399,8 +1399,8 @@ class InpinHomeItem(HomeBaseItem, BaseItem):
         self['area'] = (dict_data['estate'] or {}).get('area', -1) or -1
         self['title'] = self.estate_type_dict.get(
             str(((dict_data['estate'] or {}).get('estate_type') or {}).get('id') or '-1'), "") + " " + \
-                        ((dict_data['estate'] or {}).get('region') or {}).get('name', "") or "" + " " + \
-                        f"{self['area']} متر" if self['area'] != -1 else ""
+                        (((dict_data['estate'] or {}).get('region') or {}).get('name', "") or "") + " " + \
+                        (f"{self['area']} متر" if self['area'] != -1 else "")
 
         self['description'] = dict_data['description'] or "not_defined"
         self['neighbourhood'] = ((dict_data['estate'] or {}).get('region') or {}).get('name',
