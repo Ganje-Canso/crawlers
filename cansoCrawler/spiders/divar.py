@@ -10,8 +10,10 @@ from cansoCrawler.utilities.Normalize import normalize_text
 class DivarSpider(scrapy.Spider):
     name = "divar"
     start_urls = [
-        'https://divar.ir/s/tehran'
+        'https://api.divar.ir/v8/places/cities'
     ]
+    allowed_domains = ['divar.ir']
+
 
     def __init__(self, category='', **kwargs):
         self.cat = category
@@ -35,11 +37,10 @@ class DivarSpider(scrapy.Spider):
         super().__init__(**kwargs)
 
     def parse(self, response):
-        self.logger.info("Getting categories and cities from %s", self.start_urls[0])
-        cities, categories = self.divar_finder(response)
-        for city in cities:
-            self.logger.info("Getting %s city", city[0])
-            code = city[2]  # City code
+        city_list = json.loads(response.body.decode('UTF-8'))["cities"]
+        for city in city_list:
+            self.logger.info("Getting %s city", city['name'])
+            code = city['id']  # City code
             req = {"json_schema": {"category": {"value": self.category}}, "last-post-date": 0}
             yield scrapy.Request(
                 f'https://api.divar.ir/v8/search/{code}/{self.category}',
@@ -55,7 +56,7 @@ class DivarSpider(scrapy.Spider):
             )
 
     def get_page(self, response, city, category, counter):
-        self.logger.info("Getting page {} of {}".format(counter, city[0]))
+        self.logger.info("Getting page {} of {}".format(counter, city["name"]))
         json_response = json.loads(response.body.decode("UTF-8"))
         # Get page details
         for i in range(0, len(json_response['widget_list'])):
@@ -69,10 +70,10 @@ class DivarSpider(scrapy.Spider):
                 headers=self.headers
             )
         # Next page
-        if (city[1] not in self.metropolis and counter <= 1) or (city[1] in self.metropolis and counter <= 2):
+        if (city["name"] not in self.metropolis and counter <= 1) or (city["name"] in self.metropolis and counter <= 2):
             req = {"json_schema": {"category": {"value": category}}, "last-post-date": json_response['last_post_date']}
             yield response.follow(
-                f'https://api.divar.ir/v8/search/{city[2]}/{self.category}',
+                f'https://api.divar.ir/v8/search/{city["id"]}/{self.category}',
                 callback=self.get_page,
                 method='POST',
                 body=json.dumps(req),
@@ -94,28 +95,9 @@ class DivarSpider(scrapy.Spider):
         else:
             return
         item.clean(json_response)
-        item['city'] = normalize_text(city[1])
+        item['city'] = normalize_text(city["name"])
         item['province'] = get_province(item['city'])
         return item
-
-    def divar_finder(self, response):
-        categories = []  # [name(English)]
-        cities = []  # [href, name(Persian), id]
-
-        script = response.css('body').xpath("./script")[0].extract()
-        script = script[script.find('window.__PRELOADED_STATE__ = "{') + 30:script.find('window.env') - 5]
-        script = script.replace('\\', '')
-        try:
-            script_json = json.loads(script)
-        except Exception as e:
-            self.logger.error("jsonException: %s", e)
-            self.logger.error("json: %s", script)
-            return [], []
-        places = script_json['city']['places']
-        for key in places.keys():
-            cities.append([places[key]['slug'], places[key]['name'], str(places[key]['id'])])
-
-        return cities, categories
 
     headers = {
         'Accept': 'application/json',
