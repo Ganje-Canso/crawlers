@@ -115,10 +115,10 @@ def normalize_model(model: str, brand: str):
         return 'پارس'
     if ('روا' in model or 'روآ' in model or 'آردی' in model or 'اردی' in model or 'RD' in model) and 'پژو' in brand:
         return 'آردی'
-    if ('سواری' in model or 'سدان' in model or 'پیکان' in model) and 'پیکان' in brand:
-        return 'سواری'
     if 'وانت' in model and 'پیکان' in brand:
         return 'وانت'
+    if ('سواری' in model or 'سدان' in model or 'پیکان' in model) and 'پیکان' in brand:
+        return 'سواری'
     if 'پرادو' in model:
         return 'پرادو'
     if 'لندکروز' in model:
