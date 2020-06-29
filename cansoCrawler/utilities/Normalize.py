@@ -75,10 +75,8 @@ def normalize_model(model: str, brand: str):
     model = model.replace('سواری', '')
     model = model.strip()
 
-    if 'سایر مدل ها' in model:
-        return 'not_defined'
     if 'سایر' in model:
-        return 'not_defined'
+        return 'سایر مدل ها'
     if ('آریسان' in model or 'اریسان' in model) and 'آریسان' in brand:
         return 'not_defined'
     if 'CLA' in model and 'بنز' in brand:
@@ -206,7 +204,7 @@ def normalize_brand(brand: str):
     brand = brand.replace('سدان', '')
     brand = brand.replace('سواری', '')
 
-    if 'وانت' in brand or 'سایر' in brand:
+    if 'وانت' in brand or 'سایر' in brand or 'قطعات' in brand or 'دیگر' in brand:
         return 'not_defined'
     if 'آیودی' in brand or 'ایودی' in brand or 'آئودی' in brand or 'ائودی' in brand or 'AUDI' in brand:
         return 'آئودی'
@@ -226,8 +224,6 @@ def normalize_brand(brand: str):
         return 'بی ام و'
     if 'DS' in brand or 'دی اس' in brand:
         return 'دی اس'
-    if 'دیگر' in brand:
-        return 'not_defined'
     if 'سیتروین' in brand or 'سیتروئن' in brand:
         return 'سیتروئن'
     if 'فولکس' in brand:
@@ -240,8 +236,6 @@ def normalize_brand(brand: str):
         return 'بورگوارد'
     if 'دانگ' in brand and 'فنگ' in brand:
         return 'دانگ فنگ'
-    if 'قطعات' in brand:
-        return 'not_defined'
 
     return brand
 
