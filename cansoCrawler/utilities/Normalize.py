@@ -236,6 +236,8 @@ def normalize_brand(brand: str):
         return 'کیا'
     if 'گک' in brand:
         return 'گک'
+    if 'گوارد' in brand:
+        return 'بورگوارد'
     if 'دانگ' in brand and 'فنگ' in brand:
         return 'دانگ فنگ'
     if 'قطعات' in brand:
