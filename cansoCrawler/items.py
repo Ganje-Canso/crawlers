@@ -568,13 +568,13 @@ class MelkanaHomeItem(HomeBaseItem, BaseItem):
         self['url'] = f"https://www.melkana.com/estate/detail/{details['code']}"
         self['source_id'] = 6
         self['time'] = get_time_stamp()
-        self['title'] = details['title'] or 'not_defined'
+        self['area'] = int(details['foundation'] or -1)
+        self['title'] = self['category'] + " " + (f"{self['area']} متر" if self['area'] != -1 else "")
         self['province'] = 'تهران'
         self['city'] = 'تهران'
         self['production'] = -1 if details['estate_age'] is None else datetime.datetime.today().year - 621 - int(
             details['estate_age'])
         self['room'] = int(details['rooms'] or -1)
-        self['area'] = int(details['foundation'] or -1)
         if details['deal_type'] == 'فروش':
             self['price'] = clean_number(details['price'])
         else:
