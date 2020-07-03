@@ -24,13 +24,20 @@ class HamrahmechanicSpider(scrapy.Spider):
         if json_response['success']:
             car_list = json_response['data']['list']
             for car in car_list:
-                item = HamrahmechanicCarItem()
-                item.extract(car)
-                item['city'] = car['cityNamePersian']
-                item['province'] = get_province(car['cityNamePersian'] or 'noting')
-                yield item
+                yield response.follow(url=f"https://www.hamrah-mechanic.com/api/exhibitiondetails/generalinfo/?OrderId={car['orderId']}",
+                                      callback=self.parse_ad, headers=self.headers, cb_kwargs={"nick_name": car["nickName"]})
         else:
             self.logger.info(f"empty: {json_response}")
+
+    def parse_ad(self, response, nick_name):
+        json_response = json.loads(response.body.decode("UTF-8"))
+        car_info = json_response["data"]["carInfo"]
+        item = HamrahmechanicCarItem()
+        item['brand'] = nick_name
+        item['city'] = car_info['cityNamePersian']
+        item['province'] = get_province(car_info['cityNamePersian'] or 'noting')
+        item.extract(car_info)
+        return item
 
     def get_body(self, page):
         return {"Brands": [], "BrandsEnglishName": [], "Models": [], "ModelsEnglishName": [], "BodyTypes": [],
