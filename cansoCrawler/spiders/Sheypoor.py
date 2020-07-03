@@ -60,7 +60,11 @@ class SheypoorSpider(scrapy.Spider):
             "لوازم خانگی",
             "لوازم شخصی",
         ]
-        self.logger.info(f"nav: {nav}")
+
+        if sub_category not in nav:
+            self.logger.info(f'wrong subCategory for: {sub_category} in: {response.request.url} | wrong nav: {nav}')
+            return None
+
         for category in category_list:
             if category == 'وسایل نقلیه' and self.category == 'car':
                 continue
