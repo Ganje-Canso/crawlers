@@ -394,7 +394,7 @@ def check_space_with_digit(text: str):
 
 
 def clean_number(data, int_type=True):
-    data = convert_digits(data)
+    data = convert_digits(str(data))
     if str(data) == "-1":
         if int_type:
             return int(data)
