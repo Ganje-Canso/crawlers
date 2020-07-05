@@ -312,10 +312,11 @@ def normalize_text(string: str):
         return None
 
 
-def remove_extra_character_and_normalize(text: str, listing=False):
+def remove_extra_character_and_normalize(text: str, listing=False, check_space=True):
     text = normalize_text(text)
     text = convert_digits(text)
-    text = check_space_with_digit(text)
+    if check_space:
+        text = check_space_with_digit(text)
     text = text.replace("(", "")
     text = text.replace(")", "")
     text = text.replace("-", "")
@@ -393,6 +394,7 @@ def check_space_with_digit(text: str):
 
 
 def clean_number(data, int_type=True):
+    data = convert_digits(data)
     if str(data) == "-1":
         if int_type:
             return int(data)

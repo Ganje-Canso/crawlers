@@ -8,7 +8,7 @@ import scrapy
 
 import datetime
 
-from cansoCrawler.utilities.Normalize import clean_number
+from cansoCrawler.utilities.Normalize import clean_number, remove_extra_character_and_normalize
 
 
 class BaseItem(scrapy.Item):
@@ -598,7 +598,7 @@ class DivarCarItems(CarBaseItem, BaseItem):
         list_data = data['widgets']['list_data']
         for i in list_data:
             if i['title'] == 'برند':
-                extract_model_brand(self, i['value'])
+                extract_model_brand(self, remove_extra_character_and_normalize(i['value'], check_space=False))
             elif i['title'] == 'کارکرد':
                 try:
                     self['consumption'] = int(i['value'].replace('٫', '').strip())
@@ -946,18 +946,19 @@ class HamrahmechanicCarItem(CarBaseItem, BaseItem):
         self['source_id'] = 9
         self['time'] = get_time_stamp()
         self['thumbnail'] = f"https://www.hamrah-mechanic.com{car_dict['imageUrls'][0]}"
-        self['url'] = f"https://www.hamrah-mechanic.com/cars-for-sale/{car_dict['carNameEnglish']}/{car_dict['orderId']}/"
-        self['title'] = car_dict['carNamePersian']
-        self['price'] = car_dict['price']
-        self['consumption'] = car_dict['km']
-        self['chassis_type'] = car_dict['bodyTypePersian']
-        self['gear_box'] = car_dict['gearBoxPersian']
-        self['production'] = car_dict['year']
+        self[
+            'url'] = f"https://www.hamrah-mechanic.com/cars-for-sale/{car_dict['carNameEnglish']}/{car_dict['orderId']}/"
+        self['title'] = car_dict['carNamePersian'] or "not_defined"
+        self['price'] = car_dict['price'] or "not_defined"
+        self['consumption'] = car_dict['km'] or "not_defined"
+        self['chassis_type'] = car_dict['bodyTypePersian'] or "not_defined"
+        self['gear_box'] = car_dict['gearBoxPersian'] or "not_defined"
+        self['production'] = car_dict['year'] or "not_defined"
         self['category'] = 'خودرو'
         self['sub_category'] = 'سواری'
         self['tell'] = car_dict.get('consultantPhone', "not_defined")
         self['description'] = car_dict.get('technicalDescription', 'not_defined')
-        extract_model_brand(self, self['brand'])
+        extract_model_brand(self, remove_extra_character_and_normalize(self['brand'], check_space=False))
 
 
 def hash_token(token, source_id):
@@ -1011,10 +1012,10 @@ def extract_model_brand(self, brand_model):
         self['brand'] = 'پراید'
         self['model'] = 'سایر مدل‌ها'
 
-    elif 'تیبا' in i['value'] and 'صندوق‌دار' in i['value'] or 'تیبا' in i['value'] and ('۱' in i['value'] or '1' in i['value']):
+    elif 'تیبا' in i['value'] and 'صندوق‌دار' in i['value'] or 'تیبا' in i['value'] and '1' in i['value']:
         self['brand'] = 'تیبا'
         self['model'] = 'صندوق دار'
-    elif 'تیبا' in i['value'] and 'هاچبک' in i['value'] or 'تیبا' in i['value'] and ('۲' in i['value'] or '2' in i['value']):
+    elif 'تیبا' in i['value'] and 'هاچبک' in i['value'] or 'تیبا' in i['value'] and '2' in i['value']:
         self['brand'] = 'تیبا'
         self['model'] = 'هاچ بک'
     elif 'تیبا' in i['value']:
@@ -1044,34 +1045,34 @@ def extract_model_brand(self, brand_model):
         self['brand'] = 'ساینا'
         self['model'] = 'سایر مدل‌ها'
 
-    elif 'ام‌وی‌ام' in i['value'] and '110' in i['value']:
+    elif 'ام وی ام' in i['value'] and '110' in i['value']:
         self['brand'] = 'ام وی ام'
         self['model'] = '110'
-    elif 'ام‌وی‌ام' in i['value'] and '110S' in i['value']:
+    elif 'ام وی ام' in i['value'] and '110S' in i['value']:
         self['brand'] = 'ام وی ام'
         self['model'] = '110S'
-    elif 'ام‌وی‌ام' in i['value'] and '315' in i['value'] and 'صندوق‌دار' in i['value']:
+    elif 'ام وی ام' in i['value'] and '315' in i['value'] and 'صندوق‌دار' in i['value']:
         self['brand'] = 'ام وی ام'
         self['model'] = '315 صندوق‌دار'
-    elif 'ام‌وی‌ام' in i['value'] and '315' in i['value'] and 'هاچبک' in i['value']:
+    elif 'ام وی ام' in i['value'] and '315' in i['value'] and 'هاچبک' in i['value']:
         self['brand'] = 'ام وی ام'
         self['model'] = '315 هاچبک'
-    elif 'ام‌وی‌ام' in i['value'] and '530' in i['value']:
+    elif 'ام وی ام' in i['value'] and '530' in i['value']:
         self['brand'] = 'ام وی ام'
         self['model'] = '530'
-    elif 'ام‌وی‌ام' in i['value'] and '550' in i['value']:
+    elif 'ام وی ام' in i['value'] and '550' in i['value']:
         self['brand'] = 'ام وی ام'
         self['model'] = '550'
-    elif 'ام‌وی‌ام' in i['value'] and 'X33' in i['value']:
+    elif 'ام وی ام' in i['value'] and 'X33' in i['value']:
         self['brand'] = 'ام وی ام'
         self['model'] = 'X33'
-    elif 'ام‌وی‌ام' in i['value'] and 'X22' in i['value']:
+    elif 'ام وی ام' in i['value'] and 'X22' in i['value']:
         self['brand'] = 'ام وی ام'
         self['model'] = 'X22'
-    elif 'ام‌وی‌ام' in i['value'] and 'X33' in i['value'] and 'S' in i['value']:
+    elif 'ام وی ام' in i['value'] and 'X33' in i['value'] and 'S' in i['value']:
         self['brand'] = 'ام وی ام'
         self['model'] = 'X33 S'
-    elif 'ام‌وی‌ام' in i['value']:
+    elif 'ام وی ام' in i['value']:
         self['brand'] = 'ام وی ام'
         self['model'] = '‌سایر مدل‌ها'
 
@@ -1325,7 +1326,8 @@ def extract_model_brand(self, brand_model):
     elif 'رنو' in i['value'] and 'مگان' in i['value'] and 'مونتاژ' in i['value']:
         self['brand'] = 'رنو'
         self['model'] = 'مگان مونتاژ'
-    elif 'وانت' in i['value'] and 'رنو' in i['value'] and 'وانت' in i['value'] and 'تندر' in i['value'] and '91' in i['value']:
+    elif 'وانت' in i['value'] and 'رنو' in i['value'] and 'وانت' in i['value'] and 'تندر' in i['value'] and '91' in i[
+        'value']:
         self['brand'] = 'رنو'
         self['model'] = 'وانت رنو وانت تندر 90'
     elif 'رنو' in i['value']:
@@ -1490,6 +1492,20 @@ def extract_model_brand(self, brand_model):
     elif 'کیا' in i['value']:
         self['brand'] = 'کیا'
         self['model'] = '‌سایر مدل‌ها'
+
+    elif 'بسترن' in i['value'] and 'B30' in i['value']:
+        self['brand'] = 'بسترن'
+        self['model'] = 'B30'
+    elif 'بسترن' in i['value'] and 'B50' in i['value']:
+        self['brand'] = 'بسترن'
+        self['model'] = 'B50'
+    elif 'بسترن' in i['value'] and 'B50F' in i['value']:
+        self['brand'] = 'بسترن'
+        self['model'] = 'B50F'
+    elif 'بسترن' in i['value']:
+        self['brand'] = 'بسترن'
+        self['model'] = '‌سایر مدل‌ها'
+
     else:
         self['brand'] = "not_defined"
         self['model'] = "not_defined"
