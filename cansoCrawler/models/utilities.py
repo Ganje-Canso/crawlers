@@ -36,14 +36,15 @@ def get_item(table_name: str, token: str):
 
 
 def create_city_condition(city):
-    conditions = ""
-    city_pieces = remove_extra_character_and_normalize(city, True)
-    for piece in city_pieces:
-        if piece.find('ا') == 0 or piece.find('آ') == 0:
-            conditions += f"( name like '%آ{piece[1:]}%' or name like '%ا{piece[1:]}%' ) and "
-        else:
-            conditions += f"( name like '%{piece}%' ) and "
-    return conditions[:-5]
+    condition = ""
+    city = remove_extra_character_and_normalize(city)
+
+    if city.find('ا') == 0 or city.find('آ') == 0:
+        condition += f"( name = '%آ{city[1:]}%' or name = '%ا{city[1:]}%' )"
+    else:
+        condition += f"( name = '%{city}%' )"
+
+    return condition
 
 
 PROVINCE_DATA = {
