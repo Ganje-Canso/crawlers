@@ -31,12 +31,13 @@ class SheypoorSpider(scrapy.Spider):
 
         for ad in ads:
             if ad['listingID'] == self.get_last_id():
+                self.logger.info(f"stop on:{ad['listingID']} for page:{page}")
                 return None
             yield response.follow(url=f"https://www.sheypoor.com/api/v5.3.0/listings/{ad['listingID']}",
                                   callback=self.parse_ad)
 
         if page <= self._pages:
-            yield response.follow(url=self.get_url(++page), callback=self.parse, cb_kwargs={"page": page})
+            yield response.follow(url=self.get_url(page + 1), callback=self.parse, cb_kwargs={"page": page + 1})
 
     def parse_ad(self, response):
         dict_data = json.loads(response.body.decode('UTF-8'))
@@ -47,11 +48,11 @@ class SheypoorSpider(scrapy.Spider):
 
         if self.category == 'home':
             item = SheypoorHomeItem()
-            item.extract(response)
+            item.extract(dict_data)
             return item
         if self.category == 'car':
             item = SheypoorCarItem()
-            item.extract(response)
+            item.extract(dict_data)
             return item
 
         return None
