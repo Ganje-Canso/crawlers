@@ -12,7 +12,7 @@ class SheypoorSpider(scrapy.Spider):
     name = 'sheypoor'
     allowed_domains = ['sheypoor.com']
     category = ''
-    _pages = 5
+    _pages = 7
     request_time = -1
     last_id = None
 
@@ -76,8 +76,7 @@ class SheypoorSpider(scrapy.Spider):
         if url is None:
             self.last_id = -1
         else:
-            urls = url.split('-')
-            self.last_id = urls[len(urls) - 1][:-5]
+            self.last_id = url.split('/')[-1]
         return self.last_id
 
     category_list = [
