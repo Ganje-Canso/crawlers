@@ -121,31 +121,19 @@ class CarBaseItem(scrapy.Item):
 
 class SheypoorBaseItem(BaseItem):
 
-    def extract(self, response):
-        url = response.request.url
-        self['url'] = url
-        url_sections = url.split('-')
-        dirty_token = url_sections[len(url_sections) - 1]
-        token = dirty_token[0:dirty_token.find('.htm')]
-        try:
-            self['token'] = hash_token(token, 2)
-        except:
-            self['token'] = -1
+    def extract(self, dict_data):
+        self['url'] = f"https://www.sheypoor.com/{dict_data['listingID']}"
+        self['token'] = hash_token(dict_data['listingID'], 2)
         self['source_id'] = 2
         self['time'] = get_time_stamp()
-        self['title'] = response.css('section#item-details').xpath(
-            './div[1]/h1[1]/text()').get(default="not_defined").strip()
-        nav = response.css('nav#breadcrumbs ul').xpath('./li')
-        self['province'] = nav[1].xpath('./a/text()').get(default="not_defined").strip()
-        self['city'] = nav[2].xpath('./a/text()').get(default="not_defined").strip()
-        if len(nav) >= 6:
-            self['neighbourhood'] = nav[3].xpath('./a/text()').get(default="not_defined").strip()
-        self['description'] = response.css('section#item-details p.description::text').get(
-            default="not_defined").strip()
-        self['thumbnail'] = response.css('div#item-images img::attr(src)').get(default="not_defined")
-        price = response.css('section#item-details span.item-price > strong::text').get(
-            default="").strip()
-        self['price'] = clean_number(price)
+        self['title'] = dict_data.get('title', 'not_defined')
+        self['province'] = dict_data.get('location').get('region', 'not_defined')
+        self['city'] = dict_data.get('location').get('city', 'not_defined')
+        self['neighbourhood'] = dict_data.get('location').get('neighbourhood', 'not_defined')
+        self['description'] = dict_data.get('description', 'not_defined')
+        images = dict_data.get('images')
+        if len(images) > 0:
+            self['thumbnail'] = images[0].get('fullSizeURL', images[0].get('thumbnailURL', 'not_defined'))
 
 
 class SheypoorHomeItem(HomeBaseItem, SheypoorBaseItem):
@@ -164,8 +152,8 @@ class SheypoorHomeItem(HomeBaseItem, SheypoorBaseItem):
             "۲۰ سال به بالا": datetime.datetime.today().year - 644,
         }.get(data, -1)
 
-    def clean_sub_category(self, sub_category):
-        if 'رهن و اجاره خانه و آپارتمان' in self['category']:
+    def parse_category(self, category, sub_category):
+        if 'رهن و اجاره خانه و آپارتمان' in category:
             self['category'] = 'اجاره مسکونی'
             if 'آپارتمان' in sub_category:
                 self['sub_category'] = 'آپارتمان'
@@ -174,7 +162,7 @@ class SheypoorHomeItem(HomeBaseItem, SheypoorBaseItem):
             elif 'ویلا' in sub_category:
                 self['sub_category'] = 'خانه و ویلا'
 
-        elif 'خرید و فروش خانه و آپارتمان' in self['category']:
+        elif 'خرید و فروش خانه و آپارتمان' in category:
             self['category'] = 'فروش مسکونی'
             if 'آپارتمان' in sub_category:
                 self['sub_category'] = 'آپارتمان'
@@ -183,7 +171,7 @@ class SheypoorHomeItem(HomeBaseItem, SheypoorBaseItem):
             elif 'ویلا' in sub_category:
                 self['sub_category'] = 'خانه و ویلا'
 
-        elif 'رهن و اجاره اداری و تجاری' in self['category']:
+        elif 'رهن و اجاره اداری و تجاری' in category:
             self['category'] = 'اجاره اداری و تجاری'
             if 'اداری' in sub_category:
                 self['sub_category'] = 'دفتر کار اتاق اداری و مطب'
@@ -194,7 +182,7 @@ class SheypoorHomeItem(HomeBaseItem, SheypoorBaseItem):
             elif 'دامداری و کشاورزی' in sub_category:
                 self['sub_category'] = 'صنعتی, کشاورزی و تجاری'
 
-        elif 'خرید و فروش اداری و تجاری' in self['category']:
+        elif 'خرید و فروش اداری و تجاری' in category:
             self['category'] = 'فروش اداری و تجاری'
             if 'اداری' in sub_category:
                 self['sub_category'] = 'دفتر کار اتاق اداری و مطب'
@@ -205,7 +193,7 @@ class SheypoorHomeItem(HomeBaseItem, SheypoorBaseItem):
             elif 'دامداری و کشاورزی' in sub_category:
                 self['sub_category'] = 'صنعتی, کشاورزی و تجاری'
 
-        elif 'زمین و باغ' in self['category']:
+        elif 'زمین و باغ' in category:
             self['category'] = 'زمین, کلنگی و باغ'
             if 'مسکونی' in sub_category:
                 self['sub_category'] = 'مسکونی'
@@ -216,35 +204,49 @@ class SheypoorHomeItem(HomeBaseItem, SheypoorBaseItem):
             elif 'کشاورزی' in sub_category:
                 self['sub_category'] = 'صنعتی, کشاورزی و تجاری'
 
-    def extract(self, response):
-        SheypoorBaseItem.extract(self, response)
-        tr_list = response.css('section#item-details').xpath('./table/tr')
-        for tr in tr_list:
-            key = tr.xpath('./th/text()').get().strip()
-            value = tr.xpath('./td/text()').get().strip()
-            if 'سن بنا' in key:
-                self['production'] = self.get_production(value)
-            if 'پارکینگ' in key:
-                self['parking'] = True
-            if 'انباری' in key:
-                self['storeroom'] = True
-            if 'آسانسور' in key:
-                self['elevator'] = True
-            if 'متراژ' in key:
-                self['area'] = clean_number(value)
-            if 'تعداد اتاق' in key:
-                self['room'] = clean_number(value)
-            if 'رهن' in key:
-                self['deposit'] = clean_number(value)
-            if 'اجاره' in key:
-                self['rent'] = clean_number(value)
-            if 'رهن و اجاره' in key:
+    def extract_attributes(self, dict_data):
+        attribute_list = dict_data['attributes']
+        for attribute in attribute_list:
+            if attribute.get('attributeLocalyticsKey') == 'age_of_building':
+                self['production'] = self.get_production(attribute.get('attributeValue'))
+
+            elif attribute.get('attributeLocalyticsKey') == 'parking':
+                self['parking'] = 'دارد' in attribute.get('attributeTitle')
+
+            elif attribute.get('attributeLocalyticsKey') == 'storeroom':
+                self['storeroom'] = 'دارد' in attribute.get('attributeTitle')
+
+            elif attribute.get('attributeLocalyticsKey') == 'elevator':
+                self['elevator'] = 'دارد' in attribute.get('attributeTitle')
+
+            elif attribute.get('attributeLocalyticsKey') == 'area':
+                self['area'] = clean_number(attribute.get('attributeValue'))
+
+            elif attribute.get('attributeLocalyticsKey') == 'numOfRooms':
+                self['room'] = clean_number(attribute.get('attributeValue'))
+
+            elif attribute.get('attributeLocalyticsKey') == 'convert_deposit_rent':
                 self['swap_deposit_rent'] = True
-            if 'نوع کاربری' in key:
-                self.clean_sub_category(value)
-            elif 'نوع ملک' in key:
-                self.clean_sub_category(value)
-        self.clean_sub_category(self['sub_category'])
+
+            elif attribute.get('attributeLocalyticsKey') == 'realEstateType':
+                self.parse_category(dict_data['category']["c2"], attribute.get('attributeValue'))
+
+    def extract_p_d_r(self, price_string):  # extract price deposit rent
+        _price_string = price_string.strip()
+        if 'رهن' in price_string or 'اجاره' in price_string:
+            if 'رهن' in price_string:
+                self['deposit'] = clean_number(_price_string[_price_string.find('اجاره') + 5:-5])
+            if 'اجاره' in price_string:
+                self['rent'] = clean_number(_price_string[_price_string.find('رهن') + 3:-5])
+        else:
+            self['price'] = clean_number(_price_string)
+
+    def extract(self, dict_data):
+        SheypoorBaseItem.extract(self, dict_data)
+        self['advertiser'] = dict_data.get('shopInfo', {}).get('name', 'not_defined')
+        self.extract_attributes(dict_data)
+        if self['category'] == 'not_defined':
+            self.parse_category(dict_data['category']["c2"], "")
 
 
 class SheypoorCarItem(CarBaseItem, SheypoorBaseItem):
