@@ -125,9 +125,11 @@ class SheypoorBaseItem(BaseItem):
         _price_string = price_string.strip()
         if 'رهن' in price_string or 'اجاره' in price_string:
             if 'رهن' in price_string:
-                self['deposit'] = clean_number(_price_string[_price_string.find('اجاره') + 5:-5])
+                self['deposit'] = clean_number(
+                    _price_string[_price_string.find('رهن') + 3: _price_string.find('تومان')])
             if 'اجاره' in price_string:
-                self['rent'] = clean_number(_price_string[_price_string.find('رهن') + 3:-5])
+                self['rent'] = clean_number(
+                    _price_string[_price_string.find('اجاره') + 5: _price_string.find('تومان', _price_string.find('اجاره'))])
         else:
             self['price'] = clean_number(_price_string)
 
