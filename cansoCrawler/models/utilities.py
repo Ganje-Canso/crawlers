@@ -47,6 +47,17 @@ def create_city_condition(city):
     return condition
 
 
+def get_last_url(table, source_id):
+    try:
+        cursor.execute(f"select url from {table} where source_id = {source_id} order by time limit 1")
+        data = cursor.fetchall()
+        return data[0][0]
+    except:
+        conn.rollback()
+        logger.critical(f"not find item for table:{table} and source:{source_id}")
+        return None
+
+
 PROVINCE_DATA = {
     "آذربایجان شرقی": [
         "تبریز",

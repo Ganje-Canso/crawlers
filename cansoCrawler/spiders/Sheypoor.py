@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 import scrapy
+import datetime
+import json
 
 from cansoCrawler.items import SheypoorHomeItem, SheypoorCarItem
+
+from cansoCrawler.models.utilities import get_last_url
 
 
 class SheypoorSpider(scrapy.Spider):
@@ -9,80 +13,81 @@ class SheypoorSpider(scrapy.Spider):
     allowed_domains = ['sheypoor.com']
     category = ''
     _pages = 5
+    request_time = -1
+    last_id = None
 
     def __init__(self, category='none', **kwargs):
         self.category = category
         super().__init__(**kwargs)
 
     def start_requests(self):
-        if self.category == 'home':
-            yield scrapy.Request(url="https://www.sheypoor.com/%D8%A7%DB%8C%D8%B1%D8%A7%D9%86/%D8%A7%D9%85%D9%84%D8%A7%DA%A9", callback=self.parse)
-        elif self.category == 'car':
-            yield scrapy.Request(url="https://www.sheypoor.com/%D8%A7%DB%8C%D8%B1%D8%A7%D9%86/%D9%88%D8%B3%D8%A7%DB%8C%D9%84-%D9%86%D9%82%D9%84%DB%8C%D9%87", callback=self.parse)
+        yield scrapy.Request(
+            url=self.get_url(1),
+            callback=self.parse)
 
-    def parse(self, response):
-        self.logger.info('get sub_categories for: %s', self.category)
-        liList = response.css('section#categories').xpath('./div/ul/li')
-        for li in liList:
-            sub_category = li.css('span.title::text').get().strip()
-            sub_category_url = li.css('a::attr(href)').get().strip()
-            yield response.follow(sub_category_url,
-                                  callback=self.parse_ads,
-                                  cb_kwargs={"sub_category": sub_category,
-                                             "base_url": sub_category_url})
+    def parse(self, response, page=1):
+        json_data = json.loads(response.body.decode('UTF-8'))
+        ads = json_data['listings']
 
-    def parse_ads(self, response, base_url, sub_category, page=2):
-        self.logger.info("get ads from page: %s", page - 1)
-        yield from response.follow_all(response.xpath('//article/div[2]/h2/a/@href').getall(),
-                                       callback=self.parse_ad,
-                                       cb_kwargs={"sub_category": sub_category,
-                                                  "page": page - 1})
-
-        # get next page
-        if page <= self._pages:
-            yield response.follow(base_url + "?p={}".format(page), callback=self.parse_ads,
-                                  cb_kwargs={"base_url": base_url,
-                                             "sub_category": sub_category,
-                                             "page": page + 1}
-                                  )
-
-    def parse_ad(self, response, sub_category, page):
-        nav = " ".join(response.css('nav#breadcrumbs ul').xpath('./li').getall())
-        category_list = [
-            "املاک",
-            "وسایل نقلیه"
-            "ورزش فرهنگ فراغت",
-            "لوازم الکترونیکی",
-            "استخدام",
-            "صنعتی، اداری و تجاری",
-            "خدمات و کسب و کار",
-            "موبایل، تبلت و لوازم",
-            "لوازم خانگی",
-            "لوازم شخصی",
-        ]
-
-        if sub_category not in nav:
-            self.logger.info(f'wrong subCategory for: {sub_category} in: {response.request.url} | wrong nav: {nav}')
-            return None
-
-        for category in category_list:
-            if category == 'وسایل نقلیه' and self.category == 'car':
-                continue
-            if category == 'املاک' and self.category == 'home':
-                continue
-            if category in nav:
-                self.logger.info(f"wrong category({category}) for: {response.request.url} | wrong nav: {nav}")
+        for ad in ads:
+            if ad['listingID'] == self.get_last_id():
                 return None
+            yield response.follow(url=f"https://www.sheypoor.com/api/v5.3.0/listings/{ad['listingID']}",
+                                  callback=self.parse_ad)
+
+        if page <= self._pages:
+            yield response.follow(url=self.get_url(++page), callback=self.parse, cb_kwargs={"page": page})
+
+    def parse_ad(self, response):
+        dict_data = json.loads(response.body.decode('UTF-8'))
+        base_category = dict_data['category']["c1"]
+
+        if self.category == 'home' and base_category != 'املاک' or self.category == 'car' and base_category != 'وسایل نقلیه':
+            return None
 
         if self.category == 'home':
             item = SheypoorHomeItem()
-            item['category'] = sub_category
             item.extract(response)
             return item
         if self.category == 'car':
             item = SheypoorCarItem()
-            item['category'] = sub_category
             item.extract(response)
             return item
 
         return None
+
+    def get_url(self, page_number):
+        request_time = self.get_request_time()
+        if self.category == 'home':
+            return f"https://www.sheypoor.com/api/v5.3.0/listings?viewId=5&p={page_number}&requestDateTime={request_time}&categoryID=43603&locationType=null&withImage=0"
+        else:
+            return f"https://www.sheypoor.com/api/v5.3.0/listings?viewId=5&p={page_number}&requestDateTime={request_time}&categoryID=43626&locationType=null&withImage=0"
+
+    def get_request_time(self):
+        if self.request_time == -1:
+            self.request_time = str(datetime.datetime.now().timestamp())[:15]
+        return self.request_time
+
+    def get_last_id(self):
+        if self.last_id is not None:
+            return self.last_id
+        url = get_last_url(self.category, 2)
+        if url is None:
+            self.last_id = -1
+        else:
+            urls = url.split('-')
+            self.last_id = urls[len(urls) - 1][:-5]
+        return self.last_id
+
+    category_list = [
+        "املاک",
+        "وسایل نقلیه"
+        "ورزش فرهنگ فراغت",
+        "لوازم الکترونیکی",
+        "استخدام",
+        "صنعتی، اداری و تجاری",
+        "خدمات و کسب و کار",
+        "موبایل، تبلت و لوازم",
+        "لوازم خانگی",
+        "لوازم شخصی",
+    ]
