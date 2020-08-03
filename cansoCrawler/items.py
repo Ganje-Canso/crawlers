@@ -121,6 +121,16 @@ class CarBaseItem(scrapy.Item):
 
 class SheypoorBaseItem(BaseItem):
 
+    def extract_p_d_r(self, price_string):  # extract price deposit rent
+        _price_string = price_string.strip()
+        if 'رهن' in price_string or 'اجاره' in price_string:
+            if 'رهن' in price_string:
+                self['deposit'] = clean_number(_price_string[_price_string.find('اجاره') + 5:-5])
+            if 'اجاره' in price_string:
+                self['rent'] = clean_number(_price_string[_price_string.find('رهن') + 3:-5])
+        else:
+            self['price'] = clean_number(_price_string)
+
     def extract(self, dict_data):
         self['url'] = f"https://www.sheypoor.com/{dict_data['listingID']}"
         self['token'] = hash_token(dict_data['listingID'], 2)
@@ -129,11 +139,12 @@ class SheypoorBaseItem(BaseItem):
         self['title'] = dict_data.get('title', 'not_defined')
         self['province'] = dict_data.get('location').get('region', 'not_defined')
         self['city'] = dict_data.get('location').get('city', 'not_defined')
-        self['neighbourhood'] = dict_data.get('location').get('neighbourhood', 'not_defined')
+        self['neighbourhood'] = dict_data.get('location').get('neighbourhood', 'not_defined') or 'not_defined'
         self['description'] = dict_data.get('description', 'not_defined')
         images = dict_data.get('images')
         if len(images) > 0:
             self['thumbnail'] = images[0].get('fullSizeURL', images[0].get('thumbnailURL', 'not_defined'))
+        self.extract_p_d_r(dict_data.get('priceString', -1))
 
 
 class SheypoorHomeItem(HomeBaseItem, SheypoorBaseItem):
@@ -229,24 +240,14 @@ class SheypoorHomeItem(HomeBaseItem, SheypoorBaseItem):
                 self['swap_deposit_rent'] = True
 
             elif attribute.get('attributeLocalyticsKey') == 'realEstateType':
-                self.parse_category(dict_data['category']["c2"], attribute.get('attributeValue'))
-
-    def extract_p_d_r(self, price_string):  # extract price deposit rent
-        _price_string = price_string.strip()
-        if 'رهن' in price_string or 'اجاره' in price_string:
-            if 'رهن' in price_string:
-                self['deposit'] = clean_number(_price_string[_price_string.find('اجاره') + 5:-5])
-            if 'اجاره' in price_string:
-                self['rent'] = clean_number(_price_string[_price_string.find('رهن') + 3:-5])
-        else:
-            self['price'] = clean_number(_price_string)
+                self.parse_category(dict_data['category'].get('c2', 'not_defined') or 'not_defined', attribute.get('attributeValue'))
 
     def extract(self, dict_data):
         SheypoorBaseItem.extract(self, dict_data)
         self['advertiser'] = dict_data.get('shopInfo', {}).get('name', 'not_defined')
         self.extract_attributes(dict_data)
         if self['category'] == 'not_defined':
-            self.parse_category(dict_data['category']["c2"], "")
+            self.parse_category(dict_data['category'].get('c2', 'not_defined') or 'not_defined', "")
 
 
 class SheypoorCarItem(CarBaseItem, SheypoorBaseItem):
@@ -294,37 +295,42 @@ class SheypoorCarItem(CarBaseItem, SheypoorBaseItem):
             self['brand'] = 'not_defined'
             self['model'] = 'not_defined'
 
-    def extract(self, response):
-        SheypoorBaseItem.extract(self, response)
-        nav = response.css('nav#breadcrumbs ul').xpath('./li')
-        brand = nav[len(nav) - 1].xpath('./a/text()').get(default="not_defined").strip()
-        if self['category'] not in brand and brand not in self['category'] and self['category'] != brand:
-            self['brand'] = brand
-        tr_list = response.css('section#item-details').xpath('./table/tr')
-        for tr in tr_list:
-            key = tr.xpath('./th/text()').get().strip()
-            value = tr.xpath('./td/text()').get().strip()
-            if 'حجم موتور' in key:
-                pass
-            if 'مدل خودرو' in key:
-                self['model'] = value
-            if 'نقدی/اقساطی' in key:
-                self['cash_installment'] = value
-            if 'سال تولید' in key:
-                self['production'] = clean_number(value)
-            if 'کیلومتر' in key:
-                self['consumption'] = clean_number(value)
-            if 'رنگ' in key:
-                self['color'] = value
-            if 'گیربکس' in key:
-                self['gear_box'] = value
-            if 'نوع سوخت' in key:
-                self['fuel'] = value
-            if 'وضعیت بدنه' in key:
-                self['body_condition'] = value
-            if 'نوع شاسی' in key:
-                self['chassis_type'] = value
+    def extract_attributes(self, attribute_list):
+        for attribute in attribute_list:
+            if attribute.get('attributeLocalyticsKey') == 'model':
+                self['model'] = attribute.get('attributeValue')
+
+            if attribute.get('attributeLocalyticsKey') == 'bodyType':
+                self['chassis_type'] = attribute.get('attributeValue')
+
+            if attribute.get('attributeLocalyticsKey') == 'productionYear':
+                self['production'] = clean_number(attribute.get('attributeValue'))
+
+            if attribute.get('attributeLocalyticsKey') == 'km':
+                self['consumption'] = clean_number(attribute.get('attributeValue'))
+
+            if attribute.get('attributeLocalyticsKey') == 'carColor':
+                self['color'] = attribute.get('attributeValue')
+
+            if attribute.get('attributeLocalyticsKey') == 'gearbox':
+                self['gear_box'] = attribute.get('attributeValue')
+
+            if attribute.get('attributeLocalyticsKey') == 'carBodyCondition':
+                self['body_condition'] = attribute.get('attributeValue')
+
+            if attribute.get('attributeLocalyticsKey') == 'payment_type':
+                self['cash_installment'] = attribute.get('attributeValue')
+
+            if attribute.get('attributeLocalyticsKey') == 'fuel':
+                self['fuel'] = attribute.get('attributeValue')
+
+    def extract(self, dict_data):
+        SheypoorBaseItem.extract(self, dict_data)
+        self['brand'] = dict_data['category'].get('c3', 'not_defined') or 'not_defined'
+        self.extract_attributes(dict_data['attributes'])
+        self['category'] = dict_data['category'].get('c2', 'not_defined') or 'not_defined'
         self.clean_category()
+
 
 
 class BamaCarItem(CarBaseItem, BaseItem):
