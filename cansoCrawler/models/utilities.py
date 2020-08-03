@@ -49,8 +49,9 @@ def create_city_condition(city):
 
 def get_last_url(table, source_id):
     try:
-        cursor.execute(f"select url from {table} where source_id = {source_id} order by time limit 1")
+        cursor.execute(f"select url from {table} where source_id = {source_id} order by time desc limit 1")
         data = cursor.fetchall()
+        logger.info(f"last url:{data[0][0]} for table:{table} and source:{source_id}")
         return data[0][0]
     except:
         conn.rollback()
