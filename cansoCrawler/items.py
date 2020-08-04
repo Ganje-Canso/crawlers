@@ -52,7 +52,7 @@ class BaseItem(scrapy.Item):
         self['latitude'] = -1
         self['longitude'] = -1
         self['tell'] = 'not_defined'
-        self['swap'] = False
+        self['swap'] = None
 
 
 class HomeBaseItem(scrapy.Item):
@@ -81,14 +81,14 @@ class HomeBaseItem(scrapy.Item):
         self['area'] = -1
         self['deposit'] = -1
         self['rent'] = -1
-        self['administrative_document'] = False
-        self['parking'] = False
-        self['elevator'] = False
-        self['storeroom'] = False
-        self['swap_deposit_rent'] = False
-        self['balcony'] = False
-        self['cooler'] = False
-        self['package'] = False
+        self['administrative_document'] = None
+        self['parking'] = None
+        self['elevator'] = None
+        self['storeroom'] = None
+        self['swap_deposit_rent'] = None
+        self['balcony'] = None
+        self['cooler'] = None
+        self['package'] = None
         self['estate_floor'] = -1
         self['estate_direction'] = 'not_defined'
         self['kitchen'] = 'not_defined'
