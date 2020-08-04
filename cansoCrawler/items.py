@@ -10,6 +10,8 @@ import datetime
 
 from cansoCrawler.utilities.Normalize import clean_number, remove_extra_character_and_normalize
 
+from cansoCrawler.utilities.Normalize import convert_alphabetic_number_to_integer
+
 
 class BaseItem(scrapy.Item):
     token = scrapy.Field()
@@ -699,7 +701,7 @@ class DivarHomeItems(HomeBaseItem, BaseItem):
                 except:
                     data['production'] = -1
             elif i['title'] == 'تعداد اتاق':
-                self['room'] = clean_number(i['value'])
+                self['room'] = convert_alphabetic_number_to_integer(i['value'])
             elif i['title'] == 'متراژ':
                 try:
                     self['area'] = int(i['value'].split(' ')[0])

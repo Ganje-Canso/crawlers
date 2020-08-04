@@ -408,3 +408,18 @@ def clean_number(data, int_type=True):
     if int_type:
         return int(clean_data)
     return clean_data
+
+
+def convert_alphabetic_number_to_integer(number):
+    if number == 'بدون اتاق':
+        return 0
+    elif number == 'یک':
+        return 1
+    elif number == 'دو':
+        return 2
+    elif number == 'سه':
+        return 3
+    elif number == 'چهار':
+        return 4
+    else:
+        return 5
