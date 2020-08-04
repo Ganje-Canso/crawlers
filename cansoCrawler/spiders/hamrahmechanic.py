@@ -4,7 +4,7 @@ import json
 
 from cansoCrawler.items import HamrahmechanicCarItem
 
-from cansoCrawler.models.utilities import get_province
+from cansoCrawler.utilities.db_work import get_province
 
 
 class HamrahmechanicSpider(scrapy.Spider):

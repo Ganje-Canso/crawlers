@@ -1,9 +1,18 @@
 from scrapy.utils.log import logger
-from cansoCrawler.utilities.Normalize import remove_extra_character_and_normalize
 import psycopg2 as psycopg2
+from configparser import ConfigParser
 
-conn = psycopg2.connect(database="cansotest", user="canso", password="oJ72k2cLdgfWN7ruujHJb8A1jOXKxSjK", host="canso.ir",
-                             port="5432")
+from cansoCrawler.utilities.Normalize import remove_extra_character_and_normalize
+
+config_object = ConfigParser().read("configs.ini")
+# db_config = config_object["local_db"]
+db_config = config_object["server_db"]
+conn = psycopg2.connect(
+    database=db_config["database"],
+    user=db_config["user"],
+    password=db_config["password"],
+    host=db_config["host"],
+    port=db_config["port"])
 cursor = conn.cursor()
 
 
@@ -18,20 +27,6 @@ def get_province(city: str):
     except Exception as e:
         conn.rollback()
         logger.critical(f"get_province for {condition}: {e}")
-        return 'not_defined'
-
-
-def get_item(table_name: str, token: str):
-    try:
-        cursor.execute(
-            "select source_id from {} where token=%s;".format(table_name),
-            (token,)
-        )
-        data = cursor.fetchall()
-        return data[0][0]
-    except Exception as e:
-        conn.rollback()
-        logger.critical(e)
         return 'not_defined'
 
 

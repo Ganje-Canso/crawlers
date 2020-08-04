@@ -5,7 +5,7 @@ import json
 
 from cansoCrawler.items import SheypoorHomeItem, SheypoorCarItem
 
-from cansoCrawler.models.utilities import get_last_url
+from cansoCrawler.utilities.db_work import get_last_url
 
 
 class SheypoorSpider(scrapy.Spider):

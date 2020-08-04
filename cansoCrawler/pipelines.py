@@ -7,14 +7,23 @@
 import json
 from scrapy.utils.log import logger
 import psycopg2 as psycopg2
+from configparser import ConfigParser
+
 from cansoCrawler.utilities.Normalize import normalize_item
 
 
 class CansocrawlerPipeline(object):
 
     def open_spider(self, spider):
-        self.conn = psycopg2.connect(database="canso", user="postgres", password="104603415204", host="localhost",
-                                     port="5433")
+        config_obj = ConfigParser().read("/utilities/configs.ini")
+        db_config = config_obj["local_db"]
+        # db_config = config_obj["server_db"]
+        self.conn = psycopg2.connect(
+            database=db_config["database"],
+            user=db_config["user"],
+            password=db_config["password"],
+            host=db_config["host"],
+            port=db_config["port"])
         self.cursor = self.conn.cursor()
 
     def close_spider(self, spider):

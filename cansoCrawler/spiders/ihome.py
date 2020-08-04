@@ -5,7 +5,7 @@ import scrapy
 
 from cansoCrawler.items import IhomeHomeItem
 
-from cansoCrawler.models.utilities import get_province
+from cansoCrawler.utilities.db_work import get_province
 
 
 class IhomeSpider(scrapy.Spider):
