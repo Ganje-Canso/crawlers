@@ -12,7 +12,7 @@ class SheypoorSpider(scrapy.Spider):
     name = 'sheypoor'
     allowed_domains = ['sheypoor.com']
     category = ''
-    _pages = 7
+    _pages = 150
     request_time = -1
     last_id = None
 
