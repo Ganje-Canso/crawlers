@@ -1,12 +1,15 @@
+import os
+
 from scrapy.utils.log import logger
 import psycopg2 as psycopg2
 from configparser import ConfigParser
 
 from cansoCrawler.utilities.Normalize import remove_extra_character_and_normalize
 
-config_object = ConfigParser().read("configs.ini")
-# db_config = config_object["local_db"]
-db_config = config_object["server_db"]
+config_object = ConfigParser()
+config_object.read(os.path.join(os.path.dirname(__file__), "configs.ini"))
+db_config = config_object["local_db"]
+#db_config = config_object["server_db"]
 conn = psycopg2.connect(
     database=db_config["database"],
     user=db_config["user"],
