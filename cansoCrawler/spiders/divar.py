@@ -50,12 +50,13 @@ class DivarSpider(scrapy.Spider):
                 headers=self.headers,
                 cb_kwargs={
                     'city': city,
+                    'province': get_province(city['name']),
                     'category': self.category,
                     'counter': 1
                 }
             )
 
-    def get_page(self, response, city, category, counter):
+    def get_page(self, response, city, category, counter, province):
         self.logger.info("Getting page {} of {}".format(counter, city["name"]))
         json_response = json.loads(response.body.decode("UTF-8"))
         # Get page details
@@ -66,7 +67,7 @@ class DivarSpider(scrapy.Spider):
                     json_response['widget_list'][i]['data']['token']
                 ),
                 callback=self.get_page_items,
-                cb_kwargs={'city': city},
+                cb_kwargs={'city': city, 'province': province},
                 headers=self.headers
             )
         # Next page
@@ -80,12 +81,13 @@ class DivarSpider(scrapy.Spider):
                 cb_kwargs={
                     'city': city,
                     'category': category,
-                    'counter': counter + 1
+                    'counter': counter + 1,
+                    'province': province
                 },
                 headers=self.headers
             )
 
-    def get_page_items(self, response, city):
+    def get_page_items(self, response, city, province):
         self.logger.info("Getting page items")
         json_response = json.loads(response.body.decode("UTF-8"))
         if self.category == 'real-estate':
@@ -96,7 +98,7 @@ class DivarSpider(scrapy.Spider):
             return
         item.clean(json_response)
         item['city'] = normalize_text(city["name"])
-        item['province'] = get_province(item['city'])
+        item['province'] = province
         return item
 
     headers = {
