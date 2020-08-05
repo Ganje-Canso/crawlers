@@ -4,23 +4,19 @@
 #
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: https://docs.scrapy.org/en/latest/topics/item-pipeline.html
-import json
-import os
 
 from scrapy.utils.log import logger
 import psycopg2 as psycopg2
-from configparser import ConfigParser
 
 from cansoCrawler.utilities.Normalize import normalize_item
+from cansoCrawler.utilities.configs import server_db, local_db
 
 
 class CansocrawlerPipeline(object):
 
     def open_spider(self, spider):
-        config_object = ConfigParser()
-        config_object.read(os.path.join(os.path.dirname(__file__), "utilities/configs.ini"))
-        db_config = config_object["local_db"]
-        # db_config = config_object["server_db"]
+        # db_config = local_db
+        db_config = server_db
         self.conn = psycopg2.connect(
             database=db_config["database"],
             user=db_config["user"],

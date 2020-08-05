@@ -1,4 +1,4 @@
 /.idea
 /cansoCrawler/__pycache__
 *.pyc
-/cansoCrawler/utilities/configs.ini
+/cansoCrawler/utilities/configs.py

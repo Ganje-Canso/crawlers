@@ -1,15 +1,12 @@
-import os
-
 from scrapy.utils.log import logger
 import psycopg2 as psycopg2
-from configparser import ConfigParser
 
 from cansoCrawler.utilities.Normalize import remove_extra_character_and_normalize
+from cansoCrawler.utilities.Normalize import normalize_text
+from cansoCrawler.utilities.configs import server_db, local_db
 
-config_object = ConfigParser()
-config_object.read(os.path.join(os.path.dirname(__file__), "configs.ini"))
-db_config = config_object["local_db"]
-#db_config = config_object["server_db"]
+# db_config = local_db
+db_config = server_db
 conn = psycopg2.connect(
     database=db_config["database"],
     user=db_config["user"],
@@ -20,6 +17,7 @@ cursor = conn.cursor()
 
 
 def get_province(city: str):
+    city = normalize_text(city)
     condition = create_city_condition(city)
     try:
         cursor.execute(
@@ -38,9 +36,9 @@ def create_city_condition(city):
     city = remove_extra_character_and_normalize(city)
 
     if city.find('ا') == 0 or city.find('آ') == 0:
-        condition += f"( name = '%آ{city[1:]}%' or name = '%ا{city[1:]}%' )"
+        condition += f"( name = 'آ{city[1:]}' or name = 'ا{city[1:]}' )"
     else:
-        condition += f"( name = '%{city}%' )"
+        condition += f"( name = '{city}' )"
 
     return condition
 
