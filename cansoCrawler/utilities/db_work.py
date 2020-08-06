@@ -43,15 +43,29 @@ def create_city_condition(city):
     return condition
 
 
-def get_last_url(table, source_id):
+def get_last_url(table, source_id, condition=None):
     try:
-        cursor.execute(f"select url from {table} where source_id = {source_id} order by time desc limit 1")
+        query = f"select url from {table} where source_id = {source_id} {('and '+condition) if condition is not None else ''} order by time limit 1"
+        cursor.execute(query)
         data = cursor.fetchall()
         logger.info(f"last url:{data[0][0]} for table:{table} and source:{source_id}")
         return data[0][0]
     except:
         conn.rollback()
         logger.critical(f"not find item for table:{table} and source:{source_id}")
+        return None
+
+
+def get_item_count(table, source_id, condition=None):
+    try:
+        query = f"select count(*) from {table} where source_id = {source_id} {('and '+condition) if condition is not None else ''}"
+        cursor.execute(query)
+        data = cursor.fetchall()
+        logger.info(f"item count:{data[0][0]} for table:{table} and source:{source_id}")
+        return data[0][0]
+    except:
+        conn.rollback()
+        logger.critical(f"not find item count for table:{table} and source:{source_id}")
         return None
 
 

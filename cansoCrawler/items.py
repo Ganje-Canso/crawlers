@@ -336,7 +336,6 @@ class SheypoorCarItem(CarBaseItem, SheypoorBaseItem):
         self.clean_category()
 
 
-
 class BamaCarItem(CarBaseItem, BaseItem):
 
     def create_subject(self, sections):
