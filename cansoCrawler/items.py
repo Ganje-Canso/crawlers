@@ -923,6 +923,8 @@ class IranpelakCarItem(CarBaseItem, BaseItem):
         self['token'] = hash_token(url.split('/')[-1], 8)
         self['url'] = url
         self['thumbnail'] = response.css('div[itemprop="image"] img::attr(src)').get('not_defined')
+        if 'http' not in self['thumbnail']:
+            self['thumbnail'] = f"https://iranpelak.com{self['thumbnail']}"
         self['category'] = 'خودرو'
         self['sub_category'] = 'سواری'
         self['brand'] = response.css('div.header-carname label[itemprop="brand"]::text').get('not_defined').strip()
