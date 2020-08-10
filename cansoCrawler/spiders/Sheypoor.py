@@ -4,8 +4,9 @@ import datetime
 import json
 
 from cansoCrawler.items import SheypoorHomeItem, SheypoorCarItem
+from scrapy import signals
 
-from cansoCrawler.utilities.db_work import get_last_url
+from cansoCrawler.utilities.db_work import get_stop_id, store_stop_id, get_item_count
 
 
 class SheypoorSpider(scrapy.Spider):
@@ -16,18 +17,26 @@ class SheypoorSpider(scrapy.Spider):
     sheypoor_page = 1
     request_time = -1
     last_id = None
+    first_id = "-1"
+    item_count = 0
 
     def __init__(self, category='none', **kwargs):
         self.category = category
         super().__init__(**kwargs)
 
     def start_requests(self):
+        self.item_count = get_item_count(self.category, 2)
         yield scrapy.Request(url=self.get_url(), callback=self.parse, headers=self.headers)
 
     def parse(self, response, page=1):
         json_data = json.loads(response.body.decode('UTF-8'))
         ads = json_data['listings']
+
+        if len(ads) > 0 and page == 1:
+            self.first_id = ads[0]['listingID']
+
         self.logger.info(f"length of data:{len(ads)} for page:{page} and time is:{self.request_time}")
+
         for ad in ads:
             if ad['listingID'] == self.get_last_id():
                 self.logger.info(f"stop on:{ad['listingID']} for page:{page}")
@@ -57,6 +66,19 @@ class SheypoorSpider(scrapy.Spider):
 
         return None
 
+    @classmethod
+    def from_crawler(cls, crawler, *args, **kwargs):
+        spider = super(SheypoorSpider, cls).from_crawler(crawler, *args, **kwargs)
+        crawler.signals.connect(spider.spider_closed, signal=signals.spider_closed)
+        return spider
+
+    def spider_closed(self, spider):
+        store_stop_id('sheypoor', self.category, self.first_id)
+        new_count = get_item_count(self.category, 2)
+        if new_count is not None and self.item_count is not None:
+            self.logger.info(
+                f"count of stored items:{new_count - self.item_count} for category:{self.category}")
+
     def get_url(self):
         request_time = self.get_request_time()
         if self.category == 'home':
@@ -74,7 +96,7 @@ class SheypoorSpider(scrapy.Spider):
     def get_last_id(self):
         if self.last_id is not None:
             return self.last_id
-        url = get_last_url(self.category, 2)
+        url = get_stop_id('sheypoor', self.category)
         if url is None:
             self.last_id = -1
         else:
