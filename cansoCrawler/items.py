@@ -346,14 +346,17 @@ class BamaCarItem(CarBaseItem, BaseItem):
         return subject.strip()
 
     def extract(self, response):
+        url = response.request.url
+        self['url'] = url
+        if self['category'] == 'car':
+            self['token'] = hash_token(url.split('-')[1], 3)
+        else:
+            self['token'] = hash_token(url.split('/')[-2].split('-')[-1], 3)
         if self['category'] == 'car':
             self['category'] = 'خودرو'
             self['sub_category'] = 'سواری'
         elif self['category'] == 'motorcycle':
             self['category'] = 'موتورسیکلت و لوازم جانبی'
-        url = response.request.url
-        self['url'] = url
-        self['token'] = hash_token(url.split('-')[1], 3)
         info_right = response.css('div.inforight')
         description = response.css('div.addetaildesc').xpath('./span/text()').get(default="not_defined").strip()
         self['description'] = description
