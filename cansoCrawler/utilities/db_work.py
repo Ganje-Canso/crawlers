@@ -16,7 +16,7 @@ conn = psycopg2.connect(
 cursor = conn.cursor()
 
 
-def get_province(city: str):
+def _get_province(city: str):
     city = normalize_text(city)
     condition = create_city_condition(city)
     try:
@@ -29,6 +29,42 @@ def get_province(city: str):
         conn.rollback()
         logger.critical(f"get_province for {condition}: {e}")
         return 'not_defined'
+
+
+def get_province(city: str):
+    city = city.replace('حومه', '').strip()
+    unusual = {
+        'سراوان-سیستان و بلوچستان': {"p": "سیستان و بلوچستان", "c": "سراوان"},
+        'اسلام‌‌آباد غرب': {"p": "کرمانشاه", "c": "اسلام آبادغرب"},
+        'اسلام‌شهر': {"p": "تهران", "c": "اسلامشهر"},
+        'بندر ترکمن': {"p": "گلستان", "c": "ترکمن"},
+        'بندرعباس': {"p": "هرمزگان", "c": "بندر عباس"},
+        'چابهار': {"p": "سیستان و بلوچستان", "c": "چاه بهار"},
+        'فریدون‌کنار': {"p": "مازندران", "c": "فریدونکنار"},
+        'قاين': {"p": "خراسان جنوبی", "c": "قائن"},
+        'محمدیه-قزوین': {"p": "قزوین", "c": "محمدیه"},
+        'مسجد سلیمان': {"p": "خوزستان", "c": "مسجدسلیمان"},
+        'محموداباد': {"p": "آذربایجان غربی", "c": "محمودآباد"},
+        'کلاراباد': {"p": "مازندران", "c": "کلارآباد"},
+        'عباس اباد': {"p": "مازندران", "c": "عباس آباد"},
+        'بندرانزلی': {"p": "گیلان", "c": "بندر انزلی"},
+        'لشت نشای - زیبا کنار': {"p": "گیلان", "c": "لشت نشاء"},
+        'متل قو - سلمان شهر': {"p": "مازندران", "c": "سلمان شهر"},
+        'محمدشهر (کرج)': {"p": "البرز", "c": "محمدشهر"},
+        'شهر جدید اندیشه': {"p": "تهران", "c": "اندیشه"},
+        'صدرا-فارس': {"p": "فارس", "c": "شهر جدید صدرا"},
+        'تالش - هشتپر': {"p": "گیلان", "c": "هشتپر"},
+        'تالش': {"p": "گیلان", "c": "تالش"},
+        'سهند': {"p": "آذربایجان شرقی", "c": "سهند"},
+        'علی‌آباد کتول': {"p": "گلستان", "c": "علی آباد کتول"},
+        'گمیشان': {"p": "گلستان", "c": "گمیشان"},
+        'مشکین‌شهر': {"p": "اردبیل", "c": "مشکین شهر"},
+        'پرند': {"p": "تهران", "c": "پرند"}
+    }
+    tmp = unusual.get(city, False)
+    if not tmp:
+        tmp = {"p": _get_province(city), "c": city}
+    return tmp
 
 
 def create_city_condition(city):
@@ -45,7 +81,7 @@ def create_city_condition(city):
 
 def get_last_url(table, source_id, condition=None):
     try:
-        query = f"select url from {table} where source_id = {source_id} {('and '+condition) if condition is not None else ''} order by time limit 1"
+        query = f"select url from {table} where source_id = {source_id} {('and ' + condition) if condition is not None else ''} order by time limit 1"
         cursor.execute(query)
         data = cursor.fetchall()
         logger.info(f"last url:{data[0][0]} for table:{table} and source:{source_id}")
@@ -58,7 +94,7 @@ def get_last_url(table, source_id, condition=None):
 
 def get_item_count(table, source_id, condition=None):
     try:
-        query = f"select count(*) from {table} where source_id = {source_id} {('and '+condition) if condition is not None else ''}"
+        query = f"select count(*) from {table} where source_id = {source_id} {('and ' + condition) if condition is not None else ''}"
         cursor.execute(query)
         data = cursor.fetchall()
         logger.info(f"item count:{data[0][0]} for table:{table} and source:{source_id}")

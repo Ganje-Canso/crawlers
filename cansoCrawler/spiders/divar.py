@@ -14,7 +14,6 @@ class DivarSpider(scrapy.Spider):
     ]
     allowed_domains = ['divar.ir']
 
-
     def __init__(self, category='', **kwargs):
         self.cat = category
         self.category = category
@@ -42,6 +41,10 @@ class DivarSpider(scrapy.Spider):
             self.logger.info("Getting %s city", city['name'])
             code = city['id']  # City code
             req = {"json_schema": {"category": {"value": self.category}}, "last-post-date": 0}
+
+            province_city = get_province(city['name'])
+            city["name"] = province_city["c"]
+
             yield scrapy.Request(
                 f'https://api.divar.ir/v8/search/{code}/{self.category}',
                 callback=self.get_page,
@@ -50,7 +53,7 @@ class DivarSpider(scrapy.Spider):
                 headers=self.headers,
                 cb_kwargs={
                     'city': city,
-                    'province': get_province(city['name']),
+                    'province': province_city["p"],
                     'category': self.category,
                     'counter': 1
                 }

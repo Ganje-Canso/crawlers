@@ -34,8 +34,11 @@ class HamrahmechanicSpider(scrapy.Spider):
         car_info = json_response["data"]["carInfo"]
         item = HamrahmechanicCarItem()
         item['brand'] = nick_name
-        item['city'] = car_info['cityNamePersian']
-        item['province'] = get_province(car_info['cityNamePersian'] or 'noting')
+
+        province_city = get_province(car_info['cityNamePersian'] or 'noting')
+        item['province'] = province_city["p"]
+        item["city"] = province_city["c"]
+
         item.extract(car_info)
         return item
 

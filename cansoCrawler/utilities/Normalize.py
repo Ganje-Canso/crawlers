@@ -317,31 +317,40 @@ def remove_extra_character_and_normalize(text: str, listing=False, check_space=T
     text = convert_digits(text)
     if check_space:
         text = check_space_with_digit(text)
-    text = text.replace("(", "")
-    text = text.replace(")", "")
-    text = text.replace("-", "")
-    text = text.replace("_", "")
-    text = text.replace(",", "")
-    text = text.replace("،", "")
-    text = text.replace("*", "")
-    text = text.replace("/", "")
-    text = text.replace(".", "")
-    text = text.replace("#", "")
-    text = text.replace("%", "")
-    text = text.replace("$", "")
-    text = text.replace("=", "")
-    text = text.replace("+", "")
-    text = text.replace("\\", "")
-    text = text.replace("<", "")
-    text = text.replace(">", "")
-    text = text.replace("|", "")
-    text = text.replace("[", "")
-    text = text.replace("]", "")
-    text = text.replace("{", "")
-    text = text.replace("}", "")
+    text = remove_extra("(", text)
+    text = remove_extra(")", text)
+    text = remove_extra("-", text)
+    text = remove_extra("_", text)
+    text = remove_extra(",", text)
+    text = remove_extra("،", text)
+    text = remove_extra("*", text)
+    text = remove_extra("/", text)
+    text = remove_extra(".", text)
+    text = remove_extra("#", text)
+    text = remove_extra("%", text)
+    text = remove_extra("$", text)
+    text = remove_extra("=", text)
+    text = remove_extra("+", text)
+    text = remove_extra("\\", text)
+    text = remove_extra("<", text)
+    text = remove_extra(">", text)
+    text = remove_extra("|", text)
+    text = remove_extra("[", text)
+    text = remove_extra("]", text)
+    text = remove_extra("{", text)
+    text = remove_extra("}", text)
     if listing:
         return [t.strip() for t in text.split()]
     return " ".join([t.strip() for t in text.split()])
+
+
+def remove_extra(key, text: str):
+    c_index = text.find(key)
+    if c_index + 1 >= len(text) or c_index <= 0:
+        return text.replace(key, "")
+    if text[c_index + 1] == " " or text[c_index - 1] == " ":
+        return text.replace(key, "")
+    return text.replace(key, " ")
 
 
 def convert_digits(text: str):

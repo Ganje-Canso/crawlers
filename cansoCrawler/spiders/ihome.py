@@ -51,12 +51,16 @@ class IhomeSpider(scrapy.Spider):
         ads = json_response["data"]
         for ad in ads:
             item = IhomeHomeItem()
-            item["city"] = city
+
             item["neighbourhood"] = neigh
             item["category"] = ('فروش ' if is_sale == 1 else "اجاره ") + category
             item["sub_category"] = sub_category
             item.extract(ad)
-            item['province'] = get_province(item['city'])
+
+            province_city = get_province(city)
+            item['province'] = province_city["p"]
+            item["city"] = province_city["c"]
+
             return item
 
     home_type_dict = {

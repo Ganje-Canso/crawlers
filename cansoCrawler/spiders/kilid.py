@@ -45,7 +45,11 @@ class KilidSpider(scrapy.Spider):
         item = KilidHomeItem()
         item['deal_type'] = deal_type
         item.extract(ad)
-        item['province'] = get_province(item['city'])
+
+        province_city = get_province(ad["city"])
+        item['province'] = province_city["p"]
+        item["city"] = province_city["c"]
+
         return item
 
     home_type_dict = {
