@@ -918,6 +918,16 @@ class InpinHomeItem(HomeBaseItem, BaseItem):
 
 class IranpelakCarItem(CarBaseItem, BaseItem):
 
+    def create_title(self):
+        result = ""
+        if self['brand'] != 'not_defined':
+            result += self['brand'] + " "
+        if self['model'] != 'not_defined':
+            result += self['model'] + " "
+        if self['production'] != 'not_defined':
+            result += self['production'] + " "
+        return result.strip('')
+
     def extract(self, response):
         self['time'] = get_time_stamp()
         self['source_id'] = 8
@@ -933,7 +943,7 @@ class IranpelakCarItem(CarBaseItem, BaseItem):
         self['model'] = response.css('div.header-carname label[itemprop="model"]::text').get('not_defined').strip()
         self['production'] = response.css('div.header-carname label[itemprop="releaseDate"]::text').get(
             'not_defined').strip()
-        self['title'] = self['brand'] + " " + self['model'] + " " + self['production']
+        self['title'] = self.create_title()
         self['production'] = self['production'].replace('(', '')
         self['production'] = int(self['production'].replace(')', '') or -1)
         if self['production'] > datetime.datetime.today().year - 600:
