@@ -80,29 +80,49 @@ def create_city_condition(city):
 
 
 def get_last_url(table, source_id, condition=None):
+    query = f"select url from {table} where source_id = {source_id} {('and ' + condition) if condition is not None else ''} order by time desc limit 1"
     try:
-        query = f"select url from {table} where source_id = {source_id} {('and ' + condition) if condition is not None else ''} order by time limit 1"
         cursor.execute(query)
         data = cursor.fetchall()
-        logger.info(f"last url:{data[0][0]} for table:{table} and source:{source_id}")
+        logger.info(f"last url:{data[0][0]} for table:{table} and source:{source_id} and query is:{query}")
         return data[0][0]
     except:
         conn.rollback()
-        logger.critical(f"not find item for table:{table} and source:{source_id}")
+        logger.critical(f"not find item for table:{table} and source:{source_id} and query is:{query}")
         return None
 
 
 def get_item_count(table, source_id, condition=None):
+    query = f"select count(*) from {table} where source_id = {source_id} {('and ' + condition) if condition is not None else ''}"
     try:
-        query = f"select count(*) from {table} where source_id = {source_id} {('and ' + condition) if condition is not None else ''}"
         cursor.execute(query)
         data = cursor.fetchall()
-        logger.info(f"item count:{data[0][0]} for table:{table} and source:{source_id}")
+        logger.info(f"item count:{data[0][0]} for table:{table} and source:{source_id} and query is:{query}")
         return data[0][0]
     except:
         conn.rollback()
-        logger.critical(f"not find item count for table:{table} and source:{source_id}")
+        logger.critical(f"not find item count for table:{table} and source:{source_id} and query is:{query}")
         return None
+
+
+def get_stop_id(crawler: str, category: str, default=None):
+    try:
+        with open(crawler + category + ".txt") as f:
+            id = f.read()
+            f.close()
+            logger.info(f"last id:{id} for crawler:{crawler} and category:{category}")
+            return id
+    except:
+        logger.critical(f"not find item id for crawler:{crawler} and category:{category}")
+        return default
+
+
+def store_stop_id(crawler: str, category: str, id):
+    if not isinstance(id, str):
+        id = str(id)
+    f = open(crawler + category + ".txt", 'w')
+    f.write(id)
+    f.close()
 
 
 PROVINCE_DATA = {
