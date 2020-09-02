@@ -182,7 +182,8 @@ class SheypoorHomeItem(HomeBaseItem, SheypoorBaseItem):
             if 'آپارتمان' in sub_category:
                 self['sub_category'] = 'آپارتمان'
             elif 'خانه و کلنگی' in sub_category:
-                self['sub_category'] = 'زمین و کلنگی'
+                self['category'] = 'زمین, کلنگی و باغ'
+                self['sub_category'] = 'مسکونی'
             elif 'ویلا' in sub_category:
                 self['sub_category'] = 'خانه و ویلا'
 
@@ -443,22 +444,24 @@ class KilidHomeItem(HomeBaseItem, BaseItem):
             elif estate_type == 'ویلایی' or estate_type == 'پنت هاوس' or estate_type == 'برج':
                 self['sub_category'] = 'خانه و ویلا'
             elif estate_type == 'زمین/کلنگی':
-                self['sub_category'] = 'زمین و کلنگی'
+                self['sub_category'] = 'مسکونی'
+                self['category'] = 'زمین، کلنگی و باغ'
         if use_type == 'اداری' or use_type == 'تجاری' or use_type == 'صنعتی':
             self['category'] = f'{"فروش" if self["deal_type"] == "buy" else "اجاره"} اداری و تجاری'
             if estate_type == 'مغازه':
                 self['sub_category'] = 'مغازه و غرفه'
-            if estate_type == 'زمین/کلنگی':
-                pass
-            if estate_type == 'مستغلات':
-                pass
-            if estate_type == 'باغ/باغچه':
+            elif estate_type == 'زمین/کلنگی':
+                self['sub_category'] = 'اداری و تجاری'
+                self['category'] = 'زمین، کلنگی و باغ'
+            elif estate_type == 'مستغلات':
+                self['sub_category'] = 'مستغلات'
+            elif estate_type == 'باغ/باغچه':
                 self['sub_category'] = 'صنعتی،‌ کشاورزی و تجاری'
-            if estate_type == 'ویلایی':
+            elif estate_type == 'ویلایی':
                 self['sub_category'] = 'دفتر کار، اتاق اداری و مطب'
-            if estate_type == 'آپارتمان':
+            elif estate_type == 'آپارتمان':
                 self['sub_category'] = 'دفتر کار، اتاق اداری و مطب'
-            if estate_type == 'کارخانه' or estate_type == 'کارگاه' or estate_type == 'انبار/سوله':
+            elif estate_type == 'کارخانه' or estate_type == 'کارگاه' or estate_type == 'انبار/سوله':
                 self['sub_category'] = 'صنعتی،‌ کشاورزی و تجاری'
 
     def extract(self, data_dict):
@@ -543,6 +546,12 @@ class IhomeHomeItem(HomeBaseItem, BaseItem):
             if other_dict['key'] == 'flooring':
                 other_dict['floor_covering '] = self.get_floor_cover(other_dict['values'])
 
+    def check_category(self):
+        if "کلنگی" in self["sub_category"]:
+            if "مسکونی" in self["category"]:
+                self['sub_category'] = 'مسکونی'
+                self['category'] = 'زمین، کلنگی و باغ'
+
     def extract(self, dict_data):
         self['token'] = hash_token(dict_data['code'], 5)
         self['url'] = f"https://ihome.ir/details-page/{dict_data['code']}"
@@ -558,6 +567,7 @@ class IhomeHomeItem(HomeBaseItem, BaseItem):
         self['thumbnail'] = self.get_img(dict_data)
         self['tell'] = dict_data['agent'].get('mobile', "not_defined")
         self.check_meta(dict_data)
+        self.check_category()
 
 
 class MelkanaHomeItem(HomeBaseItem, BaseItem):
@@ -845,7 +855,8 @@ class InpinHomeItem(HomeBaseItem, BaseItem):
             if _type == '2' or _type == '3' or _type == '5' or _type == '11':
                 self['sub_category'] = 'خانه و ویلا'
             if _type == '6' or _type == '7':
-                self['sub_category'] = 'زمین و کلنگی'
+                self['sub_category'] = 'مسکونی'
+                self['category'] = 'زمین، کلنگی و باغ'
 
     def set_thumbnail(self, files):
         for file in files:
