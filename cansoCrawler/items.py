@@ -655,9 +655,8 @@ class DivarCarItems(CarBaseItem, BaseItem):
         self['token'] = hash_token(data['token'], 1)
         self['source_id'] = 1
         self['url'] = data['data']['url']
-        self['thumbnail'] = data['data']['seo'].get('thumbnail', 'not_defined')
-        if self['thumbnail'] is not None and isinstance(self['thumbnail'], list):
-            self['thumbnail'] = self['thumbnail'][0] if 'http' in self['thumbnail'][0] else 'not_defined'
+        image_list = data['widgets']['web_images']
+        self['thumbnail'] = (image_list[0][0]['src'].replace('webp', 'jpg')) if len(image_list) > 0 else 'not_defined'
         self['latitude'] = float(data['widgets']['location'].get('latitude', -1))
         self['longitude'] = float(data['widgets']['location'].get('longitude', -1))
         subcategory = data['data']['category']['title']
@@ -756,9 +755,8 @@ class DivarHomeItems(HomeBaseItem, BaseItem):
         self['token'] = hash_token(data['token'], 1)
         self['source_id'] = 1
         self['url'] = data['data']['url']
-        self['thumbnail'] = data['data']['seo'].get('thumbnail', 'not_defined')
-        if self['thumbnail'] is not None and isinstance(self['thumbnail'], list):
-            self['thumbnail'] = self['thumbnail'][0] if 'http' in self['thumbnail'][0] else 'not_defined'
+        image_list = data['widgets']['web_images']
+        self['thumbnail'] = (image_list[0][0]['src'].replace('webp', 'jpg')) if len(image_list) > 0 else 'not_defined'
         self['latitude'] = float(data['widgets']['location'].get('latitude', -1))
         self['longitude'] = float(data['widgets']['location'].get('longitude', -1))
         self['neighbourhood'] = data['widgets']['header']['place']
