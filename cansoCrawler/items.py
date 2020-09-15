@@ -901,7 +901,7 @@ class InpinHomeItem(HomeBaseItem, BaseItem):
     def extract(self, dict_data):
         self['time'] = get_time_stamp()
         self['token'] = hash_token(dict_data['id'], 7)
-        self['url'] = f"https://www.inpinapp.com/fa/ad/{dict_data['id']}"
+        self['url'] = f"https://www.inpinapp.com/fa/listing/{dict_data['id']}"
         self['source_id'] = 7
         self['area'] = (dict_data['estate'] or {}).get('area', -1) or -1
         self['title'] = self.estate_type_dict.get(
