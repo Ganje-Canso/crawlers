@@ -2,7 +2,7 @@ import os
 import scrapy
 import json
 
-from cansoCrawler.items.items import DivarHomeItems, DivarCarItems
+from cansoCrawler.items.divar_items import HomeItem, CarItem, RecruitmentItem
 from cansoCrawler.utilities.db_work import get_province
 from cansoCrawler.utilities.Normalize import normalize_text
 
@@ -21,6 +21,8 @@ class DivarSpider(scrapy.Spider):
             self.category = 'real-estate'
         elif self.category == 'car':
             self.category = 'cars'
+        elif self.category == 'recruitment':
+            self.category = 'jobs'
         self.metropolis = [
             'تهران',
             'مشهد',
@@ -94,12 +96,14 @@ class DivarSpider(scrapy.Spider):
         self.logger.info("Getting page items")
         json_response = json.loads(response.body.decode("UTF-8"))
         if self.category == 'real-estate':
-            item = DivarHomeItems()
+            item = HomeItem()
         elif self.category == 'cars':
-            item = DivarCarItems()
+            item = CarItem()
+        elif self.category == 'jobs':
+            item = RecruitmentItem()
         else:
             return
-        item.clean(json_response)
+        item.extract(json_response)
         item['city'] = normalize_text(city["name"])
         item['province'] = province
         return item
