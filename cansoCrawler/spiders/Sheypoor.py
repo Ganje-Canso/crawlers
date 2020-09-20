@@ -3,7 +3,7 @@ import scrapy
 import datetime
 import json
 
-from cansoCrawler.items import SheypoorHomeItem, SheypoorCarItem
+from cansoCrawler.items.sheypoor_items import SheypoorHomeItem, SheypoorCarItem
 from scrapy import signals
 
 from cansoCrawler.utilities.db_work import get_stop_id, store_stop_id, get_item_count
