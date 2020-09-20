@@ -4,7 +4,7 @@ import json
 import scrapy
 from scrapy import FormRequest
 
-from cansoCrawler.items import MelkanaHomeItem
+from cansoCrawler.items.items import MelkanaHomeItem
 
 
 class MelkanaSpider(scrapy.Spider):

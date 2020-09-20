@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import scrapy
 
-from cansoCrawler.items import BamaCarItem
+from cansoCrawler.items.items import BamaCarItem
 from cansoCrawler.utilities.db_work import get_item_count, store_stop_id, get_stop_id
 from scrapy import signals
 

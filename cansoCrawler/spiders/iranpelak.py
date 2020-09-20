@@ -2,7 +2,7 @@
 import scrapy
 from scrapy import FormRequest
 
-from cansoCrawler.items import IranpelakCarItem
+from cansoCrawler.items.items import IranpelakCarItem
 
 
 class IranpelakSpider(scrapy.Spider):

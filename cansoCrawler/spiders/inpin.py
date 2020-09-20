@@ -3,7 +3,7 @@ import scrapy
 
 import json
 
-from cansoCrawler.items import InpinHomeItem
+from cansoCrawler.items.items import InpinHomeItem
 
 
 class InpinSpider(scrapy.Spider):

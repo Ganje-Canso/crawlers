@@ -3,7 +3,7 @@ import json
 
 import scrapy
 
-from cansoCrawler.items import KilidHomeItem
+from cansoCrawler.items.items import KilidHomeItem
 
 from cansoCrawler.utilities.db_work import get_province
 

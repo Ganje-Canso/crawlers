@@ -2,7 +2,7 @@
 import scrapy
 import json
 
-from cansoCrawler.items import HamrahmechanicCarItem
+from cansoCrawler.items.items import HamrahmechanicCarItem
 
 from cansoCrawler.utilities.db_work import get_province
 

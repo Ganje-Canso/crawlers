@@ -2,7 +2,7 @@ import os
 import scrapy
 import json
 
-from cansoCrawler.items import DivarHomeItems, DivarCarItems
+from cansoCrawler.items.items import DivarHomeItems, DivarCarItems
 from cansoCrawler.utilities.db_work import get_province
 from cansoCrawler.utilities.Normalize import normalize_text
 
