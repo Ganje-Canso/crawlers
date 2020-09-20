@@ -3,7 +3,7 @@ import scrapy
 import datetime
 import json
 
-from cansoCrawler.items.sheypoor_items import SheypoorHomeItem, SheypoorCarItem
+from cansoCrawler.items.sheypoor_items import HomeItem, CarItem, RecruitmentItem
 from scrapy import signals
 
 from cansoCrawler.utilities.db_work import get_stop_id, store_stop_id, get_item_count
@@ -52,15 +52,21 @@ class SheypoorSpider(scrapy.Spider):
         dict_data = json.loads(response.body.decode('UTF-8'))
         base_category = dict_data['category']["c1"]
 
-        if self.category == 'home' and base_category != 'املاک' or self.category == 'car' and base_category != 'وسایل نقلیه':
+        if self.category == 'home' and base_category != 'املاک' or \
+                self.category == 'car' and base_category != 'وسایل نقلیه' or \
+                self.category == 'recruitment' and base_category != 'استخدام':
             return None
 
         if self.category == 'home':
-            item = SheypoorHomeItem()
+            item = HomeItem()
             item.extract(dict_data)
             return item
         if self.category == 'car':
-            item = SheypoorCarItem()
+            item = CarItem()
+            item.extract(dict_data)
+            return item
+        if self.category == 'recruitment':
+            item = RecruitmentItem()
             item.extract(dict_data)
             return item
 
@@ -81,10 +87,12 @@ class SheypoorSpider(scrapy.Spider):
 
     def get_url(self):
         request_time = self.get_request_time()
-        if self.category == 'home':
-            return f"https://www.sheypoor.com/api/v5.3.0/listings?viewId=5&p={self.sheypoor_page}&requestDateTime={request_time}&categoryID=43603&locationType=null&withImage=0"
-        else:
-            return f"https://www.sheypoor.com/api/v5.3.0/listings?viewId=5&p={self.sheypoor_page}&requestDateTime={request_time}&categoryID=43626&locationType=null&withImage=0"
+        category_id = {
+            "home": "43603",
+            "car": "43626",
+            "recruitment": "43618"
+        }
+        return f"https://www.sheypoor.com/api/v5.3.0/listings?viewId=5&p={self.sheypoor_page}&requestDateTime={request_time}&categoryID={category_id.get(self.category,'-1-')}&locationType=null&withImage=0"
 
     def get_request_time(self):
         if self.request_time == -1 or self.sheypoor_page >= 25:

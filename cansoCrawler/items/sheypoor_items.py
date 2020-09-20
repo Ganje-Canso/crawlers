@@ -1,4 +1,4 @@
-from cansoCrawler.items.items import BaseItem, HomeBaseItem, CarBaseItem
+from cansoCrawler.items.items import BaseItem, HomeBaseItem, CarBaseItem, RecruitmentBaseItem
 from cansoCrawler.utilities.uses import hash_token, get_time_stamp, get_production
 from cansoCrawler.utilities.Normalize import clean_number
 
@@ -34,7 +34,7 @@ class SheypoorBaseItem(BaseItem):
         self.extract_p_d_r(dict_data.get('priceString', -1))
 
 
-class SheypoorHomeItem(HomeBaseItem, SheypoorBaseItem):
+class HomeItem(HomeBaseItem, SheypoorBaseItem):
 
     def get_production(self, data):
         return {
@@ -139,7 +139,7 @@ class SheypoorHomeItem(HomeBaseItem, SheypoorBaseItem):
             self.parse_category(dict_data['category'].get('c2', 'not_defined') or 'not_defined', "")
 
 
-class SheypoorCarItem(CarBaseItem, SheypoorBaseItem):
+class CarItem(CarBaseItem, SheypoorBaseItem):
 
     def clean_category(self):
         if 'خودرو' == self['category']:
@@ -219,3 +219,8 @@ class SheypoorCarItem(CarBaseItem, SheypoorBaseItem):
         self.extract_attributes(dict_data['attributes'])
         self['category'] = dict_data['category'].get('c2', 'not_defined') or 'not_defined'
         self.clean_category()
+
+
+class RecruitmentItem(RecruitmentBaseItem, SheypoorBaseItem):
+    def extract(self, dict_data):
+        SheypoorBaseItem.extract(self, dict_data)

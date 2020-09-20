@@ -121,6 +121,10 @@ class CarBaseItem(scrapy.Item):
         self['fuel'] = 'not_defined'
 
 
+class RecruitmentBaseItem(scrapy.Item):
+    pass
+
+
 class BamaCarItem(CarBaseItem, BaseItem):
 
     def create_subject(self, sections):
