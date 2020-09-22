@@ -1,0 +1,52 @@
+id_job=80276%2C64783&id_city=21876&id_study=&sex=0&page_param=1&per_param=25&device_id=f894c21852851374&title_search=&type=list&best=0
+-------------------------------------------------------------------------
+id_city=21876&page_param=1&per_param=25&type=list
+-------------------------------------------------------------------------
+
+POST /v1/getsearch HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 35
+Host: app.bazardi.ir
+Connection: close
+Accept-Encoding: gzip, deflate
+User-Agent: okhttp/4.6.0
+
+page_param=1&per_param=25&type=list
+
+-------------------------------------------------------------------------
+
+POST /v1/singleoffer HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 10
+Host: app.bazardi.ir
+Connection: close
+Accept-Encoding: gzip, deflate
+User-Agent: okhttp/4.6.0
+
+id=2023384
+
+-------------------------------------------------------------------------
+
+POST /v1/getdata HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 26
+Host: app.bazardi.ir
+Connection: close
+Accept-Encoding: gzip, deflate
+User-Agent: okhttp/4.6.0
+
+device_id=f894c21852851374
+
+-------------------------------------------------------------------------
+
+POST /v1/getnews HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 66
+Host: app.bazardi.ir
+Connection: close
+Accept-Encoding: gzip, deflate
+User-Agent: okhttp/4.6.0
+
+type=news&cat_id=36&page=1&per_param=25&device_id=f894c21852851374
+
+-------------------------------------------------------------------------
