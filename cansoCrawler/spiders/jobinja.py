@@ -8,7 +8,7 @@ class JobinjaSpider(scrapy.Spider):
     name = 'jobinja'
     allowed_domains = ['jobinja.ir']
 
-    pages = 10
+    pages = 100
     first_id = None
     stop_id = None
 
@@ -37,11 +37,22 @@ class JobinjaSpider(scrapy.Spider):
             self.first_id = self.get_item_id(url)
             store_stop_id(self.name, 'recruitment', self.first_id)
 
+        extra_data = {}
+        info_li_list = response.css('ul.c-infoBox').xpath('./li')
+        for li in info_li_list:
+            key = li.xpath('./h4[1]/text()').get().strip()
+            value = li.xpath('./div[1]').xpath('string(.)').get().strip()
+            extra_data[key] = value
+
+        # TODO متن معرفی شرکت
+
         yield {
             "id": self.get_item_id(url),
             "url": url,
             "page": page,
-            "title": response.css('div.c-jobView__titleText::text').get().strip()
+            "title": response.css('div.c-jobView__titleText::text').get().strip(),
+            "description": response.css('div.s-jobDesc').xpath('string(.)').get().strip(),
+            "extra_data": extra_data
         }
 
     def get_url(self, page=1):
