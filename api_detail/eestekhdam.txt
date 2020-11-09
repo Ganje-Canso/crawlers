@@ -1,0 +1,19 @@
+(categories)
+GET /v1/users/position-groups-combo.json HTTP/1.1
+Cache-Control: max-age=0
+Accept: application/json
+Accept-Encoding: gzip, deflate
+App-Version: 70
+Host: app.e-estekhdam.com
+Connection: close
+
+---------------------------------------------------------------------------
+(cities)
+https://app.e-estekhdam.com/v1/users/provinces-combo.json
+
+---------------------------------------------------------------------------
+(fields)
+https://app.e-estekhdam.com/v1/users/fields-combo.json
+
+---------------------------------------------------------------------------
+
