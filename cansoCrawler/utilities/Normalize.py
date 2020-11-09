@@ -8,6 +8,8 @@ def normalize_item(item, ad_type):
     for k, v in item.items():
         if k != 'url' and k != 'thumbnail' and isinstance(v, str) and k != 'title' and k != 'description':
             item[k] = remove_extra_character_and_normalize(v)
+        elif k == 'title' or k == 'description':
+            item[k] = normalize_text(v)
 
     if 'home' == ad_type:
         normalize_home_item(item)
