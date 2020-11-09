@@ -304,10 +304,15 @@ def normalize_production(production):
     return production
 
 
-def normalize_text(string: str):
+def normalize_text(text: str):
     n = Normalizer()
     try:
-        return n.normalize(string).replace('‌', ' ')
+        text = n.normalize(text)
+        text = text.replace('‌', ' ')
+        text = text.replace('"', ' ')
+        text = text.replace("'", ' ')
+        text = text.replace("\\", ' ')
+        return text
     except:
         return None
 
@@ -382,8 +387,9 @@ def convert_digits(text: str):
 
 
 def normalize_and_compare(c1, c2):
-    c1 = normalize_text(c1)
-    c2 = normalize_text(c2)
+    if isinstance(c1, str) and isinstance(c2, str):
+        c1 = normalize_text(c1)
+        c2 = normalize_text(c2)
     return c1 == c2
 
 
