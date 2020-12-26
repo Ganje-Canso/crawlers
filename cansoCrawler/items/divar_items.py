@@ -1,6 +1,6 @@
 from cansoCrawler.items.items import BaseItem, HomeBaseItem, CarBaseItem, RecruitmentBaseItem
 from cansoCrawler.utilities.Normalize import remove_extra_character_and_normalize
-from cansoCrawler.utilities.Normalize import convert_alphabetic_number_to_integer
+from cansoCrawler.utilities.Normalize import convert_alphabetic_number_to_integer, clean_number
 from cansoCrawler.utilities.uses import hash_token, get_time_stamp, extract_model_brand
 
 
@@ -54,7 +54,7 @@ class CarItem(CarBaseItem, DivarBaseItem):
             self['gear_box'] = i['value']
         elif i['title'] == 'وضعیت بدنه':
             self['body_condition'] = i['value']
-            
+
         elif i['title'] == 'نحوه فروش':
             if 'نقدی' in i['value']:
                 self['cash_installment'] = 'نقدی'
@@ -95,76 +95,88 @@ class CarItem(CarBaseItem, DivarBaseItem):
 
 class HomeItem(HomeBaseItem, DivarBaseItem):
 
+    def fetch_info_data(self, i):
+        if 'ساخت' in i['title']:
+            try:
+                self['production'] = clean_number(i['value'])
+            except:
+                self['production'] = -1
+        elif 'اتاق' in i['title']:
+            self['room'] = clean_number(i['value'])
+        elif i['title'] == 'متراژ':
+            try:
+                self['area'] = int(i['value'].split(' ')[0])
+            except:
+                self['area'] = -1
+        elif 'قیمت' in i['title'] and 'متر' not in i['title']:
+            try:
+                self['price'] = int(i['value'].replace(
+                    'تومان', '').strip().replace('٫', ''))
+            except:
+                self['price'] = -1
+        elif 'ودیعه' in i['title'] and 'اجارهٔ' not in  i['title'] and  'اجاره' not in  i['title']:
+            try:
+                self['deposit'] = int(i['value'].replace(
+                    'تومان', '').strip().replace('٫', ''))
+            except Exception as e:
+                self['deposit'] = 0
+        elif ('اجارهٔ' in  i['title'] or 'اجاره' in  i['title']) and 'ودیعه' not in i['title']:
+            try:
+                self['rent'] = int(i['value'].replace(
+                    'تومان', '').strip().replace('٫', ''))
+            except:
+                if ['value'] == 'مجانی':
+                    self['rent'] = 0
+                elif ['value'] == 'توافقی':
+                    self['rent'] = -1
+        elif i['title'] == 'نوع آگهی':
+            adtype = i['value']
+            if adtype == 'ارائه':
+                pass
+            elif adtype == 'فروشی':
+                pass
+        elif i['title'] == 'آگهی‌دهنده':
+            self['advertiser'] = i['value']
+        elif i['title'] == 'سند اداری':
+            self['administrative_document'] = False if i['value'] == 'نیست' else True
+        elif i['title'] == 'مایلم معاوضه کنم':
+            self['swap'] = True if i['value'] == 'هستم' else False
+        elif 'ودیعه' in i['title'] and 'اجاره' in i['title']:
+            self['swap_deposit_rent'] = 'غیر' not in i['value']
+
+    def fetch_feature_data(self, feature):
+        if 'آسانسور' in feature:
+            self['elevator'] = 'ندارد' not in feature
+
+        elif 'پارکینگ' in feature:
+            self['parking'] = 'ندارد' not in feature
+
+        elif 'انباری' in feature:
+            self['storeroom'] = 'ندارد' not in feature
+
+        elif 'بالکن' in feature:
+            self['balcony'] = 'ندارد' not in feature
+
+    def fetch_category(self, categories):
+        for item in categories:
+            if item['parent_slug'] == 'real-estate':
+                self['category'] = item['title']
+            if item['parent_slug'] != 'real-estate' and item['parent_slug'] is not None and item['parent_slug'] != 'root':
+                self['sub_category'] = item['title']
+
     def extract(self, data):
         DivarBaseItem.extract(self, data)
         for i in data['widgets']['list_data']:
-            if i['title'] == 'دسته‌بندی':
-                subcat = i['value']
-                if subcat == 'اجاره مسکونی (آپارتمان، خانه، زمین)':
-                    self['category'] = 'اجاره مسکونی'
-                    self['sub_category'] = 'سایر املاک'
-                elif subcat == 'فروش مسکونی (آپارتمان، خانه، زمین)':
-                    self['category'] = 'فروش مسکونی'
-                    self['sub_category'] = 'سایر املاک'
-                elif subcat == 'فروش اداری و تجاری (مغازه، دفتر کار، صنعتی)':
-                    self['category'] = 'فروش اداری و تجاری'
-                    self['sub_category'] = 'سایر املاک'
-                elif subcat == 'اجاره اداری و تجاری (مغازه، دفتر کار، صنعتی)':
-                    self['category'] = 'اجاره اداری و تجاری'
-                    self['sub_category'] = 'سایر املاک'
-                elif subcat == 'خدمات املاک':
-                    self['category'] = 'خدمات املاک'
-                    self['sub_category'] = 'سایر املاک'
-                elif subcat == 'زمین و کلنگی':
-                    self['sub_category'] = 'مسکونی'
-                    self['category'] = 'زمین، کلنگی و باغ'
-                else:
-                    self['sub_category'] = subcat
-            elif i['title'] == 'سال ساخت':
-                try:
-                    self['production'] = int(i['value'])
-                except:
-                    data['production'] = -1
-            elif i['title'] == 'تعداد اتاق':
-                self['room'] = convert_alphabetic_number_to_integer(i['value'])
-            elif i['title'] == 'متراژ':
-                try:
-                    self['area'] = int(i['value'].split(' ')[0])
-                except:
-                    self['area'] = -1
-            elif 'قیمت' in i['title'] and 'متر' not in i['title']:
-                try:
-                    self['price'] = int(i['value'].replace(
-                        'تومان', '').strip().replace('٫', ''))
-                except:
-                    self['price'] = -1
-            elif i['title'] == 'ودیعه':
-                try:
-                    self['deposit'] = int(i['value'].replace(
-                        'تومان', '').strip().replace('٫', ''))
-                except Exception as e:
-                    self['deposit'] = 0
-            elif i['title'] == 'اجاره':
-                try:
-                    self['rent'] = int(i['value'].replace(
-                        'تومان', '').strip().replace('٫', ''))
-                except:
-                    if ['value'] == 'مجانی':
-                        self['rent'] = 0
-                    elif ['value'] == 'توافقی':
-                        self['rent'] = -1
-            elif i['title'] == 'نوع آگهی':
-                adtype = i['value']
-                if adtype == 'ارائه':
-                    pass
-                elif adtype == 'فروشی':
-                    pass
-            elif i['title'] == 'آگهی‌دهنده':
-                self['advertiser'] = i['value']
-            elif i['title'] == 'سند اداری':
-                self['administrative_document'] = False if i['value'] == 'نیست' else True
-            elif i['title'] == 'مایلم معاوضه کنم':
-                self['swap'] = True if i['value'] == 'هستم' else False
+            if 'items' in i and i['format'] == 'group_info_row':
+                for item in i['items']:
+                    self.fetch_info_data(item)
+            elif 'items' in i and i['format'] == 'group_feature_row':
+                for item in i['items']:
+                    self.fetch_feature_data(item['title'])
+            else:
+                self.fetch_info_data(i)
+
+        self.fetch_category(data['widgets']['breadcrumb']['categories'])
 
         category = data['data']['category']['slug']
         if category == 'apartment-rent' or category == 'house-villa-rent':

@@ -121,9 +121,9 @@ class CansocrawlerPipeline(object):
                 (f",'{item['floor_covering']}'" if self.insertThis(item["floor_covering"]) else "") +
                 " )")
             self.conn.commit()
-        except:
+        except Exception as e:
             self.conn.rollback()
-            logger.critical(f"pipeline => not_exist: {e}")
+            logger.critical(f"storing home failed: {e}")
         return item
 
     def save_car_data(self, item):
@@ -190,9 +190,9 @@ class CansocrawlerPipeline(object):
                 (f",'{item['fuel']}'" if self.insertThis(item["fuel"]) else "") +
                 " )")
             self.conn.commit()
-        except:
+        except Exception as e:
             self.conn.rollback()
-            logger.critical(f"pipeline => not_exist: {e}")
+            logger.critical(f"storing car failed: {e}")
         return item
 
     def not_exist(self, token, ad_type):
