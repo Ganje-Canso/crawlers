@@ -13,45 +13,65 @@ class DivarBaseItem(BaseItem):
         self['source_id'] = 1
         self['url'] = dict_data['data']['url']
         image_list = dict_data['widgets']['web_images']
-        self['thumbnail'] = (image_list[0][0]['src'].replace('webp', 'jpg')) if len(image_list) > 0 else 'not_defined'
-        self['latitude'] = float(dict_data['widgets']['location'].get('latitude', -1))
-        self['longitude'] = float(dict_data['widgets']['location'].get('longitude', -1))
+        self['thumbnail'] = (image_list[0][0]['src'].replace(
+            'webp', 'jpg')) if len(image_list) > 0 else 'not_defined'
+        self['latitude'] = float(
+            dict_data['widgets']['location'].get('latitude', -1))
+        self['longitude'] = float(
+            dict_data['widgets']['location'].get('longitude', -1))
         self['neighbourhood'] = dict_data['widgets']['header']['place']
 
 
 class CarItem(CarBaseItem, DivarBaseItem):
 
+    def fetch_data(self, i):
+        if 'برند' in i['title']:
+            extract_model_brand(self, remove_extra_character_and_normalize(
+                i['value'], check_space=False))
+        elif i['title'] == 'کارکرد':
+            try:
+                self['consumption'] = int(i['value'].replace('٫', '').strip())
+            except:
+                self['consumption'] = -1
+        elif i['title'] == 'سال ساخت':
+            try:
+                self['production'] = int(i['value'][-4:])
+            except:
+                self['production'] = -1
+        elif i['title'] == 'رنگ':
+            self['color'] = i['value']
+        elif i['title'] == 'قیمت':
+            try:
+                self['price'] = int(i['value'].replace(
+                    'تومان', '').strip().replace('٫', ''))
+            except:
+                self['price'] = -1
+        elif i['title'] == 'نوع آگهی':
+            pass
+        elif i['title'] == 'مایلم معاوضه کنم':
+            self['swap'] = True if i['value'] == 'هستم' else False
+        elif i['title'] == 'گیربکس':
+            self['gear_box'] = i['value']
+        elif i['title'] == 'وضعیت بدنه':
+            self['body_condition'] = i['value']
+            
+        elif i['title'] == 'نحوه فروش':
+            if 'نقدی' in i['value']:
+                self['cash_installment'] = 'نقدی'
+            elif 'قسطی' in i['value']:
+                self['cash_installment'] = 'قسطی'
+            if 'معاوضه' in i['value']:
+                self['swap'] = True
+
     def extract(self, data):
         DivarBaseItem.extract(self, data)
         list_data = data['widgets']['list_data']
         for i in list_data:
-            if i['title'] == 'برند':
-                extract_model_brand(self, remove_extra_character_and_normalize(i['value'], check_space=False))
-            elif i['title'] == 'کارکرد':
-                try:
-                    self['consumption'] = int(i['value'].replace('٫', '').strip())
-                except:
-                    self['consumption'] = -1
-            elif i['title'] == 'سال ساخت':
-                try:
-                    self['production'] = int(i['value'][-4:])
-                except:
-                    self['production'] = -1
-            elif i['title'] == 'رنگ':
-                self['color'] = i['value']
-            elif i['title'] == 'قیمت':
-                try:
-                    self['price'] = int(i['value'].replace('تومان', '').strip().replace('٫', ''))
-                except:
-                    self['price'] = -1
-            elif i['title'] == 'نوع آگهی':
-                pass
-            elif i['title'] == 'مایلم معاوضه کنم':
-                self['swap'] = True if i['value'] == 'هستم' else False
-            elif i['title'] == 'گیربکس':
-                self['gear_box'] = i['value']
-            elif i['title'] == 'وضعیت بدنه':
-                self['body_condition'] = i['value']
+            if 'items' in i:
+                for item in i['items']:
+                    self.fetch_data(item)
+            else:
+                self.fetch_data(i)
 
         subcategory = data['data']['category']['title']
         if subcategory == 'سنگین':
@@ -114,17 +134,20 @@ class HomeItem(HomeBaseItem, DivarBaseItem):
                     self['area'] = -1
             elif 'قیمت' in i['title'] and 'متر' not in i['title']:
                 try:
-                    self['price'] = int(i['value'].replace('تومان', '').strip().replace('٫', ''))
+                    self['price'] = int(i['value'].replace(
+                        'تومان', '').strip().replace('٫', ''))
                 except:
                     self['price'] = -1
             elif i['title'] == 'ودیعه':
                 try:
-                    self['deposit'] = int(i['value'].replace('تومان', '').strip().replace('٫', ''))
+                    self['deposit'] = int(i['value'].replace(
+                        'تومان', '').strip().replace('٫', ''))
                 except Exception as e:
                     self['deposit'] = 0
             elif i['title'] == 'اجاره':
                 try:
-                    self['rent'] = int(i['value'].replace('تومان', '').strip().replace('٫', ''))
+                    self['rent'] = int(i['value'].replace(
+                        'تومان', '').strip().replace('٫', ''))
                 except:
                     if ['value'] == 'مجانی':
                         self['rent'] = 0

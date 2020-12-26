@@ -123,6 +123,7 @@ class CansocrawlerPipeline(object):
             self.conn.commit()
         except:
             self.conn.rollback()
+            logger.critical(f"pipeline => not_exist: {e}")
         return item
 
     def save_car_data(self, item):
@@ -191,6 +192,7 @@ class CansocrawlerPipeline(object):
             self.conn.commit()
         except:
             self.conn.rollback()
+            logger.critical(f"pipeline => not_exist: {e}")
         return item
 
     def not_exist(self, token, ad_type):
